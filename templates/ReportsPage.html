@@ -335,27 +335,13 @@
                         </div>
 
                         <table class="min-w-full divide-y divide-gray-200 mt-4 table">
-                            <thead class="bg-gray-50">
+                            <thead id="reportHead" class="bg-gray-50">
                                 <tr>
-                                    <!-- Placeholder columns -->
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Column 1</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Column 2</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Column 3</th>
+                                    <!-- Dynamic columns will be inserted here -->
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <!-- Placeholder data -->
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Data 1</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Data 2</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Data 3</td>
-                                </tr>
+                            <tbody id="reportBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamic data will be inserted here -->
                             </tbody>
                         </table>
                     </div>
@@ -442,19 +428,115 @@
         // Reports page specific JavaScript
         const generateBtn = document.getElementById('generateBtn');
         const exportBtn = document.getElementById('exportBtn');
-        const reportData = document.getElementById('reportData');
         const reportType = document.getElementById('reportType');
+        const reportHead = document.getElementById('reportHead').querySelector('tr');
+        const reportBody = document.getElementById('reportBody');
 
-        generateBtn.addEventListener('click', () => {
-            // Simulate generating report
-            reportData.classList.remove('hidden');
-            // In a real app, you would fetch data based on reportType.value
-            console.log('Generating report for:', reportType.value);
+        let currentData = [];
+
+        generateBtn.addEventListener('click', async () => {
+            const type = reportType.value;
+            let url = '';
+            let columns = [];
+
+            if (type === 'inventory') {
+                url = '/api/items';
+                columns = ['SKU', 'Name', 'Total Stock', 'Reorder Point', 'Supplier ID', 'Status'];
+            } else if (type === 'transactions') {
+                url = '/api/transactions';
+                columns = ['Transaction ID', 'Type', 'Date', 'User ID', 'Item SKU', 'Quantity', 'Notes', 'Supplier ID', 'From Location', 'To Location', 'Reason', 'Location ID'];
+            } else if (type === 'low-stock') {
+                url = '/api/reports/low-stock';
+                columns = ['SKU', 'Name', 'Total Stock', 'Reorder Point', 'Supplier ID', 'Status'];
+            }
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                currentData = await response.json();
+
+                // Clear existing table
+                reportHead.innerHTML = '';
+                reportBody.innerHTML = '';
+
+                // Add headers
+                columns.forEach(col => {
+                    const th = document.createElement('th');
+                    th.className = 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
+                    th.textContent = col;
+                    reportHead.appendChild(th);
+                });
+
+                // Add data rows
+                currentData.forEach(item => {
+                    const tr = document.createElement('tr');
+                    columns.forEach(col => {
+                        const td = document.createElement('td');
+                        td.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
+                        let key = col.toLowerCase().replace(' ', '');
+                        if (col === 'Transaction ID') key = 'transId';
+                        if (col === 'Item SKU') key = 'itemSku';
+                        if (col === 'User ID') key = 'userId';
+                        if (col === 'Supplier ID') key = 'supplierId';
+                        if (col === 'From Location') key = 'fromLocationId';
+                        if (col === 'To Location') key = 'toLocationId';
+                        if (col === 'Location ID') key = 'locationId';
+                        if (col === 'Total Stock') key = 'totalStock';
+                        if (col === 'Reorder Point') key = 'reorderPoint';
+                        td.textContent = item[key] || '';
+                        tr.appendChild(td);
+                    });
+                    reportBody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Error fetching report data:', error);
+                alert('Failed to generate report. Please try again.');
+            }
         });
 
         exportBtn.addEventListener('click', () => {
-            // Simulate export
-            alert('Export functionality would be implemented here.');
+            if (currentData.length === 0) {
+                alert('Please generate a report first.');
+                return;
+            }
+
+            const type = reportType.value;
+            let columns = [];
+
+            if (type === 'inventory') {
+                columns = ['sku', 'name', 'totalStock', 'reorderPoint', 'supplierId', 'status'];
+            } else if (type === 'transactions') {
+                columns = ['transId', 'type', 'date', 'userId', 'itemSku', 'quantity', 'notes', 'supplierId', 'fromLocationId', 'toLocationId', 'reason', 'locationId'];
+            } else if (type === 'low-stock') {
+                columns = ['sku', 'name', 'totalStock', 'reorderPoint', 'supplierId', 'status'];
+            }
+
+            // Create CSV content
+            let csv = columns.join(',') + '\n';
+            currentData.forEach(item => {
+                const row = columns.map(col => {
+                    let value = item[col] || '';
+                    // Escape commas and quotes
+                    if (value.toString().includes(',') || value.toString().includes('"')) {
+                        value = '"' + value.toString().replace(/"/g, '""') + '"';
+                    }
+                    return value;
+                }).join(',');
+                csv += row + '\n';
+            });
+
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${type}-report.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         });
     </script>
 </body>

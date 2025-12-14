@@ -12,9 +12,13 @@
   - [x] GET /api/suppliers: Returns list of suppliers with all fields
   - [x] POST /api/suppliers: Adds new supplier
 - [x] Fixed typo in SuppliersPage.html: 'Contexnt-Type' to 'Content-Type'
+- [x] Added API endpoint for low-stock reports: GET /api/reports/low-stock
+- [x] Updated ReportsPage.html to fetch data dynamically from API endpoints
+- [x] Implemented CSV export functionality for reports
 
 ## Next Steps
 - [x] Test the locations page to ensure no more TypeError (app is running)
 - [x] Verify API endpoints are working correctly (routes added)
 - [x] Check if database tables are created properly (app running with db.create_all())
 - [x] Test the suppliers add button functionality
+- [x] Test reports functionality: generate reports and export to CSV

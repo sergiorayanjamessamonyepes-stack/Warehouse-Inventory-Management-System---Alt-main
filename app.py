@@ -569,6 +569,20 @@ def add_transaction():
     db.session.commit()
     return jsonify({'message': 'Transaction added successfully', 'transId': new_trans.transId}), 201
 
+@app.route('/api/reports/low-stock', methods=['GET'])
+def get_low_stock_report():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    items = ItemsList.query.filter(ItemsList.totalStock <= ItemsList.reorderPoint).all()
+    return jsonify([{
+        'sku': item.sku,
+        'name': item.name,
+        'totalStock': item.totalStock,
+        'reorderPoint': item.reorderPoint,
+        'supplierId': item.supplierId,
+        'status': 'Low Stock'
+    } for item in items])
+
 @app.route('/logout')
 def logout():
     session.clear()

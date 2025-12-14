@@ -229,7 +229,7 @@ def admin_dashboard():
 def dashboard():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    return render_template('HomePage.html', first_name=session['first_name'], role=session['role'])
+    return render_template('DashboardPage.html', first_name=session['first_name'], role=session['role'])
 
 @app.route('/items')
 def items():

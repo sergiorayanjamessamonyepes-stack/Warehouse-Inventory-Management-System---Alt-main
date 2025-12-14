@@ -211,6 +211,7 @@ def login():
         if user and check_password_hash(user.password, password):
             session['first_name'] = user.fullName.split()[0]  # Assuming first name is first part
             session['role'] = user.role
+            session['userId'] = user.userId
             return redirect(url_for('home'))
         else:
             flash('Invalid email or password.', 'error')
@@ -446,6 +447,127 @@ def add_supplier():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    if 'first_name' not in session or session['role'] != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    users = User.query.all()
+    return jsonify([{
+        'userId': user.userId,
+        'username': user.username,
+        'fullName': user.fullName,
+        'role': user.role.upper()
+    } for user in users])
+
+@app.route('/api/users', methods=['POST'])
+def add_user():
+    if 'first_name' not in session or session['role'] != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    data = request.get_json()
+    hashed_password = generate_password_hash(data['password'])
+    new_user = User(
+        userId=User.get_next_id(),
+        username=data['username'],
+        fullName=data['fullName'],
+        password=hashed_password,
+        role=data['role']
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({'message': 'User added successfully', 'userId': new_user.userId}), 201
+
+@app.route('/api/users/<userId>', methods=['PUT'])
+def update_user(userId):
+    if 'first_name' not in session or session['role'] != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    data = request.get_json()
+    user = User.query.get_or_404(userId)
+    user.username = data['username']
+    user.fullName = data['fullName']
+    if data.get('password'):
+        user.password = generate_password_hash(data['password'])
+    user.role = data['role']
+    db.session.commit()
+    return jsonify({'message': 'User updated successfully'})
+
+@app.route('/api/users/<userId>', methods=['DELETE'])
+def delete_user(userId):
+    if 'first_name' not in session or session['role'] != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    user = User.query.get_or_404(userId)
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'message': 'User deleted successfully'})
+
+@app.route('/api/users/search', methods=['GET'])
+def search_users():
+    if 'first_name' not in session or session['role'] != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    query = request.args.get('q', '')
+    users = User.query.filter(
+        or_(User.username.contains(query), User.fullName.contains(query))
+    ).all()
+    return jsonify([{
+        'userId': user.userId,
+        'username': user.username,
+        'fullName': user.fullName,
+        'role': user.role.upper()
+    } for user in users])
+
+@app.route('/api/transactions', methods=['GET'])
+def get_transactions():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    transactions = Transaction.query.all()
+    return jsonify([{
+        'transId': trans.transId,
+        'type': trans.type,
+        'date': trans.date.isoformat(),
+        'userId': trans.userId,
+        'itemSku': trans.itemSku,
+        'quantity': trans.quantity,
+        'notes': trans.notes,
+        'supplierId': trans.supplierId,
+        'fromLocationId': trans.fromLocationId,
+        'toLocationId': trans.toLocationId,
+        'reason': trans.reason,
+        'locationId': trans.locationId
+    } for trans in transactions])
+
+@app.route('/api/transactions', methods=['POST'])
+def add_transaction():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    data = request.get_json()
+    trans_type = data['type']
+    user_id = data['userId']  # Assuming from session or data
+
+    new_trans = Transaction(
+        transId=Transaction.get_next_trans_id(),
+        type=trans_type,
+        userId=user_id,
+        notes=data.get('notes'),
+        itemSku=data['itemSku'],
+        quantity=data['quantity']
+    )
+
+    if trans_type == 'receive':
+        new_trans.supplierId = data.get('supplierId')
+        new_trans.locationId = data['locationId']
+    elif trans_type == 'transfer':
+        new_trans.fromLocationId = data['fromLocationId']
+        new_trans.toLocationId = data['toLocationId']
+        new_trans.locationId = data['fromLocationId']  # As per JS
+    elif trans_type == 'issue':
+        new_trans.locationId = data['locationId']
+    elif trans_type == 'adjustment':
+        new_trans.reason = data.get('reason')
+        new_trans.locationId = data['locationId']
+
+    db.session.add(new_trans)
+    db.session.commit()
+    return jsonify({'message': 'Transaction added successfully', 'transId': new_trans.transId}), 201
 
 @app.route('/logout')
 def logout():

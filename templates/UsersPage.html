@@ -278,7 +278,6 @@
             transition: transform 0.3s;
             max-width: 28rem;
             width: 100%;
-            margin: 2rem 0;
         }
 
         .modal-header {
@@ -764,6 +763,9 @@
         async function loadUsers() {
             try {
                 const response = await fetch('/api/users');
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
                 const users = await response.json();
                 renderUsers(users);
             } catch (error) {

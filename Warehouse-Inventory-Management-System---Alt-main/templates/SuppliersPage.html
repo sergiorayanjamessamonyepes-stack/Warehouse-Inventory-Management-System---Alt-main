@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suppliers Page - WIMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for transitions and states */
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .backdrop {
+            display: none;
+        }
+
+        .backdrop.open {
+            display: block;
+        }
+
+        @media (min-width: 1024px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+
+            .backdrop {
+                display: none !important;
+            }
+        }
+
+        /* Basic reset and utilities from original User Management page */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f9fafb;
+            color: #374151;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .space-y-6>*+* {
+            margin-top: 1.5rem;
+        }
+
+        .space-y-4>*+* {
+            margin-top: 1rem;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .gap-2>*+* {
+            margin-left: 0.5rem;
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+        }
+
+        .font-bold {
+            font-weight: bold;
+        }
+
+        .font-semibold {
+            font-weight: 600;
+        }
+
+        .text-gray-900 {
+            color: #111827;
+        }
+
+        .text-gray-600 {
+            color: #6b7280;
+        }
+
+        .text-blue-600 {
+            color: #2563eb;
+        }
+
+        .text-blue-800 {
+            color: #1e40af;
+        }
+
+        .text-red-600 {
+            color: #dc2626;
+        }
+
+        .text-red-800 {
+            color: #b91c1c;
+        }
+
+        .mt-1 {
+            margin-top: 0.25rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* SearchBar styles */
+        .search-bar-container {
+            position: relative;
+        }
+
+        .search-icon-wrapper {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            padding-left: 0.75rem;
+            display: flex;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .search-icon {
+            height: 1.25rem;
+            width: 1.25rem;
+            color: #9ca3af;
+        }
+
+        .search-input {
+            display: block;
+            width: 100%;
+            padding-left: 2.5rem;
+            padding-right: 0.75rem;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+
+        .search-input:focus {
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table th {
+            background-color: #f9fafb;
+            font-weight: 500;
+            font-size: small;
+            text-transform: uppercase;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .badge-default {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+
+        .badge-info {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            overflow-y: auto;
+            display: none;
+            /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(107, 114, 128, 0.75);
+            transition: opacity 0.3s;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(1);
+            transition: transform 0.3s;
+            max-width: 28rem;
+            width: 100%;
+            margin: 2rem 0;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding: 1.25rem;
+        }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .modal-close-btn {
+            color: #9ca3af;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            color: #6b7280;
+        }
+
+        .close-icon {
+            height: 1.5rem;
+            width: 1.5rem;
+        }
+
+        .modal-body {
+            padding: 0 1.25rem 1.25rem;
+        }
+
+        .modal-footer {
+            background-color: #f9fafb;
+            padding: 0.75rem 1rem;
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 0.5rem;
+        }
+
+        .icon {
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.5rem;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .list-disc {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+        }
+
+        .list-inside {
+            padding-left: 0;
+        }
+
+        .space-y-1>*+* {
+            margin-top: 0.25rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .input,
+        .select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .input:disabled {
+            background-color: #f9fafb;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gray-50">
+    <!-- Mobile sidebar backdrop -->
+    <div id="backdrop" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-20 lg:hidden backdrop"></div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 sidebar">
+        <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+            <div class="flex items-center">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <!-- PackageIcon SVG -->
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+                <span class="ml-2 text-lg font-semibold text-gray-900">WIMS</span>
+            </div>
+            <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700">
+                <!-- XIcon SVG -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="flex-1 px-4 py-4 space-y-1">
+            <!-- Navigation items (now with data-page attributes for dynamic loading) -->
+            <button
+                class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+                data-page="/dashboard">
+                <!-- LayoutDashboardIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                    </path>
+                </svg>
+                Dashboard
+            </button>
+            <button
+                class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+                data-page="/items">
+                <!-- PackageIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+                Items
+            </button>
+            <button
+                class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+                data-page="/locations">
+                <!-- MapPinIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Locations
+            </button>
+            <button
+                class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+                data-page="/transactions">
+                <!-- ArrowRightLeftIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                </svg>
+                Transactions
+            </button>
+            <button
+                class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-blue-50 text-blue-700"
+                data-page="/suppliers">
+                <!-- TruckIcon SVG (Corrected) -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 1 1 1h2"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 18H9"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path>
+                    <circle cx="17" cy="18" r="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                    </circle>
+                    <circle cx="7" cy="18" r="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                    </circle>
+                </svg>
+                Suppliers
+            </button>
+            <button
+                class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+                data-page="/reports">
+                <!-- FileTextIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                </svg>
+                Reports
+            </button>
+            <!-- Admin only: Users -->
+            <button
+                class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
+                data-page="/users">
+                <!-- UsersIcon SVG (Corrected) -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                    </circle>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3.13a4 4 0 0 1 0 7.75">
+                    </path>
+                </svg>
+                Users
+            </button>
+        </nav>
+
+        <div class="border-t border-gray-200 p-4">
+            <div class="flex items-center mb-3">
+                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                    <span class="text-sm font-medium text-gray-700">J</span>
+                    <!-- Placeholder: currentUser.fullName.charAt(0) -->
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-900">John Doe</p> <!-- Placeholder: currentUser.fullName -->
+                    <p class="text-xs text-gray-500 capitalize">admin</p> <!-- Placeholder: currentUser.role -->
+                </div>
+            </div>
+            <button
+                class="w-full flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <!-- LogOutIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                    </path>
+                </svg>
+                Sign Out
+            </button>
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="lg:pl-64">
+        <!-- Mobile header -->
+        <div class="lg:hidden flex items-center justify-between h-16 px-4 bg-white border-b border-gray-200">
+            <button id="openSidebar" class="text-gray-500 hover:text-gray-700">
+                <!-- MenuIcon SVG -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
+                    </path>
+                </svg>
+            </button>
+            <div class="flex items-center">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <!-- PackageIcon SVG -->
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+                <span class="ml-2 text-lg font-semibold text-gray-900">WIMS</span>
+            </div>
+            <div class="w-6"></div> <!-- Spacer -->
+        </div>
+
+        <!-- Page content -->
+        <main class="p-6">
+            <div class="container">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Suppliers</h1>
+                            <p class="text-gray-600 mt-1">Manage supplier information</p>
+                        </div>
+                        <div class="edit-only">
+                            <button class="btn btn-primary" onclick="openModal()">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Add Supplier
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="mb-4">
+                            <!-- SearchBar Component -->
+                            <div class="search-bar-container">
+                                <div class="search-icon-wrapper">
+                                    <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                                <input type="text" class="search-input" id="search-input"
+                                    placeholder="Search suppliers..." />
+                            </div>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Supplier ID</th>
+                                    <th>Name</th>
+                                    <th>Contact</th>
+                                    <th>Address</th>
+                                    <th>Total Purchases</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suppliers-table">
+                                <!-- Suppliers will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="modal-overlay" class="modal-overlay">
+                        <div class="modal-backdrop"></div>
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h2 class="modal-title">Add New Supplier</h2>
+                                <button class="modal-close-btn" id="modal-close-btn">
+                                    <svg class="close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="space-y-4">
+                                    <div class="input-group">
+                                        <label class="input-label">Name</label>
+                                        <input type="text" class="input" id="name" placeholder="e.g., ABC Supplies Co."
+                                            required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="input-label">Contact</label>
+                                        <input type="email" class="input" id="contact"
+                                            placeholder="e.g., contact@supplier.com" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="input-label">Address</label>
+                                        <input type="text" class="input" id="address"
+                                            placeholder="e.g., 123 Supply Street" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                                <button class="btn btn-primary" id="submit-btn">Create</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sidebar toggle logic
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('backdrop');
+        const openBtn = document.getElementById('openSidebar');
+        const closeBtn = document.getElementById('closeSidebar');
+
+        openBtn.addEventListener('click', () => {
+            sidebar.classList.add('open');
+            backdrop.classList.add('open');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('open');
+        });
+
+        backdrop.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('open');
+        });
+
+        // Dynamic content loading logic (for navigation)
+        const contentDiv = document.querySelector('main > div'); // Assuming the container is directly under main
+
+        // Function to load a page into the content div
+        function loadPage(page) {
+            fetch(page)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    // Parse the HTML and extract the body content (assuming pages have similar structure)
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContent = doc.querySelector('main').innerHTML;
+                    contentDiv.innerHTML = newContent;
+                })
+                .catch(error => {
+                    console.error('Error loading page:', error);
+                    contentDiv.innerHTML = '<p class="text-red-500">Error loading page. Please try again.</p>';
+                });
+        }
+
+        // Navigation logic using window.location.href
+        const navBtns = document.querySelectorAll('.nav-btn');
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const page = this.getAttribute('data-page');
+                window.location.href = page;
+            });
+        });
+
+        // Set active state based on current path
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            navBtns.forEach(btn => {
+                if (btn.getAttribute('data-page') === currentPath) {
+                    btn.classList.add('bg-blue-50', 'text-blue-700');
+                    btn.classList.remove('text-gray-700', 'hover:bg-gray-50');
+                } else {
+                    btn.classList.remove('bg-blue-50', 'text-blue-700');
+                    btn.classList.add('text-gray-700', 'hover:bg-gray-50');
+                }
+            });
+        });
+
+        // Suppliers page specific script
+        let suppliers = [];  // Global array for suppliers data
+
+        // Populate suppliers from server-rendered data
+        function initializeSuppliers() {
+            const tbody = document.getElementById('suppliers-table');
+            const rows = tbody.querySelectorAll('tr');
+            suppliers = Array.from(rows).map(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length === 5) {
+                    return {
+                        supplierId: cells[0].textContent,
+                        name: cells[1].textContent,
+                        contact: cells[2].textContent,
+                        address: cells[3].textContent,
+                        totalPurchases: parseFloat(cells[4].textContent.replace('$', ''))
+                    };
+                }
+                return null;
+            }).filter(s => s !== null);
+        }
+
+        async function fetchSuppliers() {
+            try {
+                const response = await fetch('/api/suppliers');
+                if (!response.ok) throw new Error('Failed to fetch suppliers');
+                suppliers = await response.json();
+                renderTable(suppliers);
+            } catch (error) {
+                console.error('Error fetching suppliers:', error);
+                alert('Error loading suppliers');
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('suppliers-table');
+            tbody.innerHTML = '';
+            data.forEach(s => {
+                const row = `<tr>
+                <td>${s.supplierId}</td>
+                <td>${s.name}</td>
+                <td>${s.contact}</td>
+                <td>${s.address}</td>
+                <td>$${s.totalPurchases.toFixed(2)}</td>
+            </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function filterSuppliers(query) {
+            const filtered = suppliers.filter(s =>
+                s.name.toLowerCase().includes(query.toLowerCase()) ||
+                s.supplierId.toLowerCase().includes(query.toLowerCase())
+            );
+            renderTable(filtered);
+        }
+
+        function openModal() {
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            // Reset form
+            document.getElementById('name').value = '';
+            document.getElementById('contact').value = '';
+            document.getElementById('address').value = '';
+        }
+
+        // Add event listeners for modal
+        document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+        document.getElementById('cancel-btn').addEventListener('click', closeModal);
+        document.getElementById('modal-overlay').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Add event listener for search input
+        document.getElementById('search-input').addEventListener('input', function () {
+            filterSuppliers(this.value);
+        });
+
+        async function submitForm() {
+            const name = document.getElementById('name').value.trim();
+            const contact = document.getElementById('contact').value.trim();
+            const address = document.getElementById('address').value.trim();
+
+            if (!name || !contact || !address) {
+                alert('All fields are required');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/suppliers', {
+                    method: 'POST',
+                    headers: { 'Contexnt-Type': 'application/json' },
+                    body: JSON.stringify({ name, contact, address })
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to add supplier');
+                }
+                alert('Supplier added successfully');
+                closeModal();
+                location.reload();  // Reload the page to show updated data
+            } catch (error) {
+                console.error('Error adding supplier:', error);
+                alert(error.message);
+            }
+        }
+
+        // Add event listener for submit button
+        document.getElementById('submit-btn').addEventListener('click', submitForm);
+
+        // Initial load for Suppliers page
+        fetchSuppliers();
+    </script>
+</body>
+
+</html>

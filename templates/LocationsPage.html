@@ -143,26 +143,157 @@
         }
 
         /* Modal styles */
-        .modal {
-            display: none;
+        .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            display: flex;
+            inset: 0;
+            z-index: 50;
+            overflow-y: auto;
+            display: none;
+            /* Hidden by default */
             align-items: center;
             justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(107, 114, 128, 0.75);
+            transition: opacity 0.3s;
         }
 
         .modal-content {
             background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(1);
+            transition: transform 0.3s;
+            max-width: 28rem;
+            width: 100%;
+            margin: 2rem 0;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding: 1.25rem;
+        }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .modal-close-btn {
+            color: #9ca3af;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            color: #6b7280;
+        }
+
+        .close-icon {
+            height: 1.5rem;
+            width: 1.5rem;
+        }
+
+        .modal-body {
+            padding: 0 1.25rem 1.25rem;
+        }
+
+        .modal-footer {
+            background-color: #f9fafb;
+            padding: 0.75rem 1rem;
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 0.5rem;
+        }
+
+        /* Input styles */
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        .input,
+        .select,
+        .textarea {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .input:focus,
+        .select:focus,
+        .textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .input[required],
+        .select[required],
+        .textarea[required] {
+            border-color: #ef4444;
+        }
+
+        .textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Hidden class */
+        .hidden {
+            display: none;
+        }
+
+        /* Button styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
         }
     </style>
 </head>
@@ -398,39 +529,46 @@
                     </table>
                     <p id="emptyMessage" class="text-gray-500 mt-4 hidden">No locations found</p>
                 </div>
-                <div id="modal" class="modal">
+                <!-- Modal -->
+                <div id="modal" class="modal-overlay">
+                    <div class="modal-backdrop"></div>
                     <div class="modal-content">
-                        <h2 class="text-xl font-bold mb-4">Add New Location</h2>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Warehouse ID</label>
-                                <input id="warehouseId" type="text" value="WH01"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Aisle</label>
-                                <input id="aisle" type="text" placeholder="e.g., A"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Rack</label>
-                                <input id="rack" type="text" placeholder="e.g., 1"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Shelf</label>
-                                <input id="shelf" type="text" placeholder="e.g., 1"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Capacity</label>
-                                <input id="capacity" type="number" value="100"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="modal-title">Add New Location</h3>
+                            <button class="modal-close-btn" id="modal-close-btn">
+                                <svg class="close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="space-y-4">
+                                <div class="input-group">
+                                    <label class="input-label">Warehouse ID</label>
+                                    <input type="text" class="input" id="warehouseId" value="WH01" required>
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">Aisle</label>
+                                    <input type="text" class="input" id="aisle" placeholder="e.g., A" required>
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">Rack</label>
+                                    <input type="text" class="input" id="rack" placeholder="e.g., 1" required>
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">Shelf</label>
+                                    <input type="text" class="input" id="shelf" placeholder="e.g., 1" required>
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">Capacity</label>
+                                    <input type="number" class="input" id="capacity" value="100" required>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex justify-end mt-6 space-x-2">
-                            <button id="cancelBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
-                            <button id="createBtn" class="bg-blue-500 text-white px-4 py-2 rounded">Create</button>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                            <button class="btn btn-primary" id="submit-btn">Create</button>
                         </div>
                     </div>
                 </div>
@@ -510,8 +648,6 @@
         const emptyMessage = document.getElementById('emptyMessage');
         const modal = document.getElementById('modal');
         const addLocationBtn = document.getElementById('addLocationBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const createBtn = document.getElementById('createBtn');
         const formInputs = {
             warehouseId: document.getElementById('warehouseId'),
             aisle: document.getElementById('aisle'),
@@ -578,55 +714,96 @@
         }, 300));
 
         // Modal functionality
-        addLocationBtn.addEventListener('click', () => {
-            // Reset form
-            formInputs.warehouseId.value = 'WH01';
-            formInputs.aisle.value = '';
-            formInputs.rack.value = '';
-            formInputs.shelf.value = '';
-            formInputs.capacity.value = 100;
-            modal.style.display = 'block';
-        });
+        let currentLocationId = null; // For edit mode (future use)
+        const modalTitle = document.getElementById('modal-title');
+        const submitBtn = document.getElementById('submit-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
 
-        cancelBtn.addEventListener('click', () => {
+        function openModal(locationId = null) {
+            currentLocationId = locationId;
+            if (locationId) {
+                // Edit mode: Fetch location data and populate form (future implementation)
+                modalTitle.textContent = 'Edit Location';
+                submitBtn.textContent = 'Update';
+            } else {
+                // Add mode: Clear form
+                formInputs.warehouseId.value = 'WH01';
+                formInputs.aisle.value = '';
+                formInputs.rack.value = '';
+                formInputs.shelf.value = '';
+                formInputs.capacity.value = 100;
+                modalTitle.textContent = 'Add New Location';
+                submitBtn.textContent = 'Create';
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
             modal.style.display = 'none';
-        });
+            currentLocationId = null;
+        }
 
-        createBtn.addEventListener('click', async () => {
+        // Event listeners
+        addLocationBtn.addEventListener('click', () => openModal());
+        cancelBtn.addEventListener('click', closeModal);
+        modalCloseBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+        submitBtn.addEventListener('click', handleSubmit);
+
+        async function handleSubmit() {
+            const warehouseId = formInputs.warehouseId.value.trim();
+            const aisle = formInputs.aisle.value.trim();
+            const rack = formInputs.rack.value.trim();
+            const shelf = formInputs.shelf.value.trim();
+            const capacity = formInputs.capacity.value;
+
+            if (!warehouseId || !aisle || !rack || !shelf || !capacity) {
+                alert('All fields are required');
+                return;
+            }
+
+            const data = {
+                warehouseId,
+                aisle,
+                rack,
+                shelf,
+                capacity: parseInt(capacity)
+            };
+
             try {
-                const newLocationData = {
-                    warehouseId: formInputs.warehouseId.value,
-                    aisle: formInputs.aisle.value,
-                    rack: formInputs.rack.value,
-                    shelf: formInputs.shelf.value,
-                    capacity: parseInt(formInputs.capacity.value)
-                };
-                const response = await fetch('/api/locations', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(newLocationData)
-                });
+                let response;
+                if (currentLocationId) {
+                    response = await fetch(`/api/locations/${currentLocationId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch('/api/locations', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+
                 if (response.ok) {
-                    await fetchLocations(); // Refresh locations
+                    alert(currentLocationId ? 'Location updated successfully!' : 'Location added successfully!');
+                    closeModal();
+                    await fetchLocations();
                     renderTable(locationsData);
-                    modal.style.display = 'none';
                 } else {
                     const error = await response.json();
-                    alert(error.error || 'Failed to add location');
+                    alert('Error: ' + error.error);
                 }
             } catch (error) {
-                alert('An error occurred: ' + error.message);
+                alert('Error: ' + error.message);
             }
-        });
-
-        // Close modal on outside click
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
+        }
 
         // Debounce function for search
         function debounce(func, delay) {

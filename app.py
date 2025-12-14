@@ -252,32 +252,32 @@ def locations():
         'capacity': location.capacity,
         'currentStock': location.currentStock
     } for location in locations]
-    return render_template('LocationsPage.html', location_list=location_list)
+    return render_template('LocationsPage.html', location_list=location_list, first_name=session['first_name'], role=session['role'])
 
 @app.route('/transactions')
 def transactions():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    return render_template('TransactionsPage.html')
+    return render_template('TransactionsPage.html', first_name=session['first_name'], role=session['role'])
 
 @app.route('/suppliers')
 def suppliers():
     if 'first_name' not in session:
         return redirect(url_for('login'))
     supplier_list = Supplier.query.all()
-    return render_template('SuppliersPage.html', supplier_list=supplier_list)
+    return render_template('SuppliersPage.html', supplier_list=supplier_list, first_name=session['first_name'], role=session['role'])
 
 @app.route('/reports')
 def reports():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    return render_template('ReportsPage.html')
+    return render_template('ReportsPage.html', first_name=session['first_name'], role=session['role'])
 
 @app.route('/users')
 def users():
     if 'first_name' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
-    return render_template('UsersPage.html')
+    return render_template('UsersPage.html', first_name=session['first_name'], role=session['role'])
 
 @app.route('/item/<sku>')
 def item_details(sku):

@@ -503,12 +503,11 @@
         <div class="border-t border-gray-200 p-4">
             <div class="flex items-center mb-3">
                 <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span class="text-sm font-medium text-gray-700">J</span>
-                    <!-- Placeholder: currentUser.fullName.charAt(0) -->
+                    <span class="text-sm font-medium text-gray-700">{{ first_name[0] }}</span>
                 </div>
                 <div class="ml-3">
-                    <p class="text-sm font-medium text-gray-900">John Doe</p> <!-- Placeholder: currentUser.fullName -->
-                    <p class="text-xs text-gray-500 capitalize">admin</p> <!-- Placeholder: currentUser.role -->
+                    <p class="text-sm font-medium text-gray-900">{{ first_name }}</p>
+                    <p class="text-xs text-gray-500 capitalize">{{ role }}</p>
                 </div>
             </div>
             <button

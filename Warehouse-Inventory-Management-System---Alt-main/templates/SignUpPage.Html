@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WIMS — Sign Up</title>
+  <link rel="stylesheet" href="/Warehouse-Inventory-Management-System---Alt-main/static/css/SignUpPage.Css">
+</head>
+
+<body>
+  <div class="page">
+    <div class="container" role="main" aria-labelledby="pageTitle">
+
+      <!-- Back Button -->
+      <a href="{{ url_for('landingpage') }}" class="back-btn">← Back</a>
+
+      <!-- Branding -->
+      <div class="brand" id="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M21 16V8a2 2 0 0 0-1-1.732l-7-4.04a2 2 0 0 0-2 0l-7 4.04A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.732l7 4.04a2 2 0 0 0 2 0l7-4.04A2 2 0 0 0 21 16zM12 3.2l6 3.46V9.2l-6 3.46L6 9.2V6.66L12 3.2zM5 10.4l6 3.46v6.06L5 16.46V10.4zM13 20.92v-6.06l6-3.46v6.06l-6 3.46z"/>
+          </svg>
+        </div>
+        <h1 id="pageTitle">WIMS</h1>
+        <p>Warehouse Inventory Management System</p>
+      </div>
+
+      <!-- Sign Up Card -->
+      <div class="card" role="region" aria-labelledby="signupTitle">
+
+        <h2 id="signupTitle">Create Account</h2>
+
+        <form action="{{ url_for('signup') }}" method="POST">
+
+          <!-- FIRST NAME -->
+          <div class="form-row">
+            <label for="first_name">First Name</label>
+            <input id="first_name" name="first_name" type="text" placeholder="Enter first name" required />
+          </div>
+
+          <!-- LAST NAME -->
+          <div class="form-row">
+            <label for="last_name">Last Name</label>
+            <input id="last_name" name="last_name" type="text" placeholder="Enter last name" required />
+          </div>
+
+          <!-- EMAIL -->
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="Enter your email" required />
+          </div>
+
+          <!-- PASSWORD -->
+          <div class="form-row">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="Create a password" required />
+          </div>
+
+          <!-- ADMIN CODE -->
+          <div class="form-row">
+            <label for="admin_code">Admin Code <span class="muted">(optional)</span></label>
+            <input id="admin_code" name="admin_code" type="text" placeholder="Enter admin code if any" />
+          </div>
+
+          <!-- SUBMIT -->
+          <div class="form-row">
+            <button type="submit" class="btn">Sign Up</button>
+          </div>
+
+        </form>
+
+        <div class="divider">
+          <p class="muted">Already have an account?</p>
+          <a href="{{ url_for('login') }}" class="muted">Sign In</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</body>
+</html>

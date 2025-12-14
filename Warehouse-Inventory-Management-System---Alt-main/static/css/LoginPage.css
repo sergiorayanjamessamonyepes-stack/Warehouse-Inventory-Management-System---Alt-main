@@ -1,0 +1,149 @@
+/* Reset-ish */
+* { box-sizing: border-box; }
+html,body { 
+  height: 100%; 
+  margin: 0; 
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; 
+  color:#111827; 
+  background:#F9FAFB; 
+}
+
+/* Layout */
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.container {
+  width: 100%;
+  max-width: 440px;
+}
+
+/* Back Button */
+.back-btn {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: #2563EB;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #EFF6FF; 
+  border: 1px solid #BFDBFE;
+  transition: 0.15s;
+}
+.back-btn:hover {
+  background: #DBEAFE;
+  border-color: #93C5FD;
+}
+
+/* Header */
+.brand {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.brand .logo {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:64px;
+  height:64px;
+  background:#2563EB;
+  border-radius:10px;
+  margin: 0 auto 12px;
+}
+.brand .logo svg { width:28px; height:28px; fill: #fff; display:block; }
+.brand h1 { margin:0; font-size:28px; font-weight:700; color:#0F172A; letter-spacing: -0.5px; }
+.brand p { margin:8px 0 0; color:#6B7280; font-size:14px; }
+
+/* Card */
+.card {
+  background: #fff;
+  border: 1px solid #E6E6E6;
+  border-radius:12px;
+  box-shadow: 0 8px 20px rgba(15,23,42,0.04);
+  padding: 28px;
+}
+.card h2 {
+  margin: 0 0 16px 0;
+  font-size:18px;
+  font-weight:600;
+  color:#0F172A;
+}
+
+/* Form */
+.form-row { margin-bottom:14px; }
+label { display:block; font-size:14px; color:#374151; margin-bottom:6px; }
+
+/* Inputs (text, password, email) */
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  width:100%;
+  padding:10px 12px;
+  font-size:15px;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  background:#fff;
+  outline: none;
+  transition: box-shadow .12s, border-color .12s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+}
+
+/* Button */
+.btn {
+  display:inline-block;
+  width:100%;
+  text-align:center;
+  padding:10px 12px;
+  border-radius:8px;
+  border: none;
+  cursor:pointer;
+  font-weight:600;
+  font-size:15px;
+  color:#fff;
+  background: #2563EB;
+}
+
+/* Alerts */
+.error {
+  color: #B91C1C;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  padding:10px 12px;
+  border-radius:8px;
+  font-size:14px;
+  margin-bottom:8px;
+}
+
+/* Divider */
+.divider {
+  margin-top:20px;
+  padding-top:18px;
+  border-top:1px solid #E6E6E6;
+}
+.muted { color:#6B7280; font-size:14px; }
+
+code.inline {
+  background:#F3F4F6;
+  padding:4px 8px;
+  border-radius:6px;
+  font-family: monospace;
+  font-size:13px;
+  color:#111827;
+}
+
+/* small screens tweak */
+@media (max-width:420px) {
+  .brand h1 { font-size:22px; }
+  .card { padding:20px; }
+}

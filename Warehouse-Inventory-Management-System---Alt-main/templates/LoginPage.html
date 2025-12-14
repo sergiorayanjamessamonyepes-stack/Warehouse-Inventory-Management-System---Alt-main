@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WIMS — Sign In</title>
+  <link rel="stylesheet" href="/Warehouse-Inventory-Management-System---Alt-main/static/css/LoginPage.Css">
+</head>
+<body>
+  <div class="page">
+    <div class="container" role="main" aria-labelledby="pageTitle">
+
+      <!-- Back Button -->
+      <a href="{{ url_for('landingpage') }}" class="back-btn">← Back</a>
+
+      <!-- Branding -->
+      <div class="brand" id="brand">
+        <a href="{{ url_for('home') }}" class="logo-link">
+          <div class="logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M21 16V8a2 2 0 0 0-1-1.732l-7-4.04a2 2 0 0 0-2 0l-7 4.04A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.732l7 4.04a2 2 0 0 0 2 0l7-4.04A2 2 0 0 0 21 16z"/>
+            </svg>
+          </div>
+        </a>
+        <h1 id="pageTitle">WIMS</h1>
+        <p>Warehouse Inventory Management System</p>
+      </div>
+
+      <!-- Sign In Card -->
+      <div class="card" role="region" aria-labelledby="signinTitle">
+        <h2 id="signinTitle">Sign In</h2>
+
+        <form id="loginForm" method="POST" action="{{ url_for('login') }}">
+          <div id="errorContainer" style="display:none;" class="error" role="alert">
+            {% if error %}{{ error }}{% endif %}
+          </div>
+
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="Enter your email" required />
+          </div>
+
+          <div class="form-row">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="Enter your password" required />
+          </div>
+
+          <div class="form-row">
+            <button type="submit" class="btn">Sign In</button>
+          </div>
+        </form>
+
+        <div class="divider">
+          <p class="muted">Don't have an account?</p>
+          <a href="{{ url_for('signup') }}" class="muted">Sign Up</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

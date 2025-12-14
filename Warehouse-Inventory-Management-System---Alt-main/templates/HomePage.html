@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WIMS - Warehouse Inventory Management System</title>
+    <link rel="stylesheet" href="/Warehouse-Inventory-Management-System---Alt-main/static/css/HomePage.Css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for transitions and states */
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        .backdrop {
+            display: none;
+        }
+        .backdrop.open {
+            display: block;
+        }
+        @media (min-width: 1024px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+            .backdrop {
+                display: none !important;
+            }
+        }
+    </style>
+    
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Mobile sidebar backdrop -->
+    <div id="backdrop" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-20 lg:hidden backdrop"></div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 sidebar">
+        <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+            <div class="flex items-center">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <!-- PackageIcon SVG -->
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+                <span class="ml-2 text-lg font-semibold text-gray-900">WIMS</span>
+            </div>
+            <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700">
+                <!-- XIcon SVG -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="flex-1 px-4 py-4 space-y-1">
+            <!-- Navigation items (now with data-page attributes for dynamic loading) -->
+            <button class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-blue-50 text-blue-700" data-page="/dashboard">
+                <!-- LayoutDashboardIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Dashboard
+            </button>
+            <button class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50" data-page="/items">
+                <!-- PackageIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+                Items
+            </button>
+            <button class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50" data-page="/locations">
+                <!-- MapPinIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Locations
+            </button>
+            <button class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50" data-page="/transactions">
+                <!-- ArrowRightLeftIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                </svg>
+                Transactions
+            </button>
+            <button class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50" data-page="/suppliers">
+                <!-- TruckIcon SVG (Corrected) -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 1 1 1h2"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 18H9"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path>
+                    <circle cx="17" cy="18" r="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></circle>
+                    <circle cx="7" cy="18" r="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></circle>
+                </svg>
+                Suppliers
+            </button>
+            <button class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50" data-page="/reports">
+                <!-- FileTextIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Reports
+            </button>
+            <!-- Admin only: Users -->
+            <button class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50" data-page="/users">
+                <!-- UsersIcon SVG (Corrected) -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></circle>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Users
+            </button>
+        </nav>
+
+        <div class="border-t border-gray-200 p-4">
+            <div class="flex items-center mb-3">
+                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                    <span class="text-sm font-medium text-gray-700">{{ first_name[0] }}</span>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-900">{{ first_name }}</p>
+                    <p class="text-xs text-gray-500 capitalize">{{ role }}</p>
+                </div>
+            </div>
+            <button onclick="window.location.href='/logout'" class="w-full flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <!-- LogOutIcon SVG -->
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                Sign Out
+            </button>
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="lg:pl-64">
+        <!-- Mobile header -->
+        <div class="lg:hidden flex items-center justify-between h-16 px-4 bg-white border-b border-gray-200">
+            <button id="openSidebar" class="text-gray-500 hover:text-gray-700">
+                <!-- MenuIcon SVG -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <div class="flex items-center">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <!-- PackageIcon SVG -->
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+                <span class="ml-2 text-lg font-semibold text-gray-900">WIMS</span>
+            </div>
+            <div class="w-6"></div> <!-- Spacer -->
+        </div>
+
+        <!-- Page content (dynamic content loads here) -->
+        <main class="p-6">
+            <div id="content">
+                <!-- Initial content will be loaded here via JavaScript -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sidebar toggle logic (unchanged)
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('backdrop');
+        const openBtn = document.getElementById('openSidebar');
+        const closeBtn = document.getElementById('closeSidebar');
+
+        openBtn.addEventListener('click', () => {
+            sidebar.classList.add('open');
+            backdrop.classList.add('open');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('open');
+        });
+
+        backdrop.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('open');
+        });
+
+        // Dynamic content loading logic
+        const contentDiv = document.getElementById('content');
+        let currentPage = null; // Track the current loaded page
+
+        // Function to load a page into the content div
+        function loadPage(page) {
+            if (currentPage === page) {
+                return; // Do nothing if the same page is already loaded
+            }
+            fetch(page)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    contentDiv.innerHTML = html;
+                    currentPage = page; // Update current page
+                })
+                .catch(error => {
+                    console.error('Error loading page:', error);
+                    contentDiv.innerHTML = '<p class="text-red-500">Error loading page. Please try again.</p>';
+                });
+        }
+
+        // Load the initial page (Dashboard) on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPage('/dashboard');
+        });
+
+        // Add event listeners to navigation buttons
+        const navBtns = document.querySelectorAll('.nav-btn');
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const page = this.getAttribute('data-page');
+                loadPage(page);
+
+                // Update active state: remove active from all, add to clicked
+                navBtns.forEach(b => {
+                    b.classList.remove('bg-blue-50', 'text-blue-700');
+                    b.classList.add('text-gray-700', 'hover:bg-gray-50');
+                });
+                this.classList.add('bg-blue-50', 'text-blue-700');
+                this.classList.remove('text-gray-700', 'hover:bg-gray-50');
+            });
+        });
+    </script>
+</body>
+</html>

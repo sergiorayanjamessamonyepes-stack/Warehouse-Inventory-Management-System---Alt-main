@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, session, Response, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, Response, jsonify, flash
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, or_  # For aggregating and search filtering
 import pymysql
 import mysql.connector
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -13,7 +14,8 @@ def get_db_connection():
         database="flask_app"
     )
 
-app = Flask(__name__, template_folder='Warehouse-Inventory-Management-System---Alt-main/templates')
+app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'  # Set a unique and secret key for sessions
 
 ADMIN_CODE = "SECRET123"
 
@@ -106,7 +108,7 @@ class User(db.Model):
     userId = db.Column(db.String(10), primary_key=True)  # String primary key
     username = db.Column(db.String(80), unique=True, nullable=False)
     fullName = db.Column(db.String(120), nullable=False)
-    password = db.Column(db.String(120), nullable=False)  # Plain-text for now; hash in production
+    password = db.Column(db.String(255), nullable=False)  # Hashed password
     role = db.Column(db.String(50), nullable=False)  # e.g., 'admin' or 'staff'
 
     @classmethod
@@ -172,17 +174,20 @@ def signup():
         password = request.form['password']
         admin_code = request.form.get('admin_code', '')
 
-        role = "admin" if admin_code == ADMIN_CODE else "user"
+        role = "admin" if admin_code == ADMIN_CODE else "staff"
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO users (first_name, last_name, email, password, role) VALUES (%s, %s, %s, %s, %s)",
-            (first_name, last_name, email, password, role)
+        hashed_password = generate_password_hash(password)
+
+        new_user = User(
+            userId=User.get_next_id(),
+            username=email,
+            fullName=f"{first_name} {last_name}",
+            password=hashed_password,
+            role=role
         )
-        conn.commit()
-        cursor.close()
-        conn.close()
+
+        db.session.add(new_user)
+        db.session.commit()
 
         session['first_name'] = first_name
         session['role'] = role
@@ -199,25 +204,151 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE email=%s AND password=%s", (email, password))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
+        user = User.query.filter_by(username=email).first()
 
-        if user:
-            session['first_name'] = user['first_name']
-            session['role'] = user['role']
-
-            # Redirect based on role
-            return redirect(url_for('admin_dashboard' if user['role'] == 'admin' else 'home'))
-
-        return "Invalid email or password"
+        if user and check_password_hash(user.password, password):
+            session['first_name'] = user.fullName.split()[0]  # Assuming first name is first part
+            session['role'] = user.role
+            return redirect(url_for('home'))
+        else:
+            flash('Invalid email or password.', 'error')
+            return redirect(url_for('login'))
 
     return render_template('LoginPage.html')
 
 # Logout Route
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    if 'first_name' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    return render_template('HomePage.html', first_name=session['first_name'], role=session['role'])
+
+@app.route('/dashboard')
+def dashboard():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    return render_template('DashboardPage.html')
+
+@app.route('/items')
+def items():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    return render_template('ItemsPage.html')
+
+@app.route('/locations')
+def locations():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    return render_template('LocationsPage.html')
+
+@app.route('/transactions')
+def transactions():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    return render_template('TransactionsPage.html')
+
+@app.route('/suppliers')
+def suppliers():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    return render_template('SuppliersPage.html')
+
+@app.route('/reports')
+def reports():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    return render_template('ReportsPage.html')
+
+@app.route('/users')
+def users():
+    if 'first_name' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    return render_template('UsersPage.html')
+
+@app.route('/item/<sku>')
+def item_details(sku):
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    item = ItemsList.query.get_or_404(sku)
+    return render_template('ItemPage.html', item=item)
+
+@app.route('/api/items', methods=['GET'])
+def get_items():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    items = ItemsList.query.all()
+    return jsonify([{
+        'sku': item.sku,
+        'name': item.name,
+        'description': item.description,
+        'unit': item.unit,
+        'totalStock': item.totalStock,
+        'reorderPoint': item.reorderPoint,
+        'supplierId': item.supplierId,
+        'status': 'In Stock' if item.totalStock > item.reorderPoint else 'Low Stock'
+    } for item in items])
+
+@app.route('/api/items', methods=['POST'])
+def add_item():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    data = request.get_json()
+    new_item = ItemsList(
+        sku=ItemsList.get_next_sku(),
+        name=data['name'],
+        description=data.get('description'),
+        unit=data['unit'],
+        totalStock=data['totalStock'],
+        reorderPoint=data['reorderPoint'],
+        supplierId=data['supplierId']
+    )
+    db.session.add(new_item)
+    db.session.commit()
+    return jsonify({'message': 'Item added successfully'}), 201
+
+@app.route('/api/items/<sku>', methods=['PUT'])
+def update_item(sku):
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    data = request.get_json()
+    item = ItemsList.query.get_or_404(sku)
+    item.name = data['name']
+    item.description = data.get('description')
+    item.unit = data['unit']
+    item.totalStock = data['totalStock']
+    item.reorderPoint = data['reorderPoint']
+    item.supplierId = data['supplierId']
+    db.session.commit()
+    return jsonify({'message': 'Item updated successfully'})
+
+@app.route('/api/items/<sku>', methods=['DELETE'])
+def delete_item(sku):
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    item = ItemsList.query.get_or_404(sku)
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({'message': 'Item deleted successfully'})
+
+@app.route('/api/items/search', methods=['GET'])
+def search_items():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    query = request.args.get('q', '')
+    items = ItemsList.query.filter(
+        or_(ItemsList.name.contains(query), ItemsList.sku.contains(query))
+    ).all()
+    return jsonify([{
+        'sku': item.sku,
+        'name': item.name,
+        'description': item.description,
+        'unit': item.unit,
+        'totalStock': item.totalStock,
+        'reorderPoint': item.reorderPoint,
+        'supplierId': item.supplierId,
+        'status': 'In Stock' if item.totalStock > item.reorderPoint else 'Low Stock'
+    } for item in items])
+
 @app.route('/logout')
 def logout():
     session.clear()
@@ -225,6 +356,5 @@ def logout():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.drop_all()  # Drop all tables
-        db.create_all()  # Creates tables based on models
+        db.create_all()  # Creates tables based on models if they don't exist
     app.run(debug=True)

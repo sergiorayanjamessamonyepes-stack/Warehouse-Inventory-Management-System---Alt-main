@@ -227,7 +227,12 @@
         navBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 const page = this.getAttribute('data-page');
-                loadPage(page);
+                if (page === '/items') {
+                    // Navigate to full items page instead of loading dynamically
+                    window.location.href = page;
+                } else {
+                    loadPage(page);
+                }
 
                 // Update active state: remove active from all, add to clicked
                 navBtns.forEach(b => {

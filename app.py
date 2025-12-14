@@ -241,7 +241,17 @@ def items():
 def locations():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    location_list = Location.query.all()
+    locations = Location.query.all()
+    location_list = [{
+        'locationId': location.locationId,
+        'warehouseId': location.warehouseId,
+        'aisle': location.aisle,
+        'rack': location.rack,
+        'shelf': location.shelf,
+        'fullPath': location.fullPath,
+        'capacity': location.capacity,
+        'currentStock': location.currentStock
+    } for location in locations]
     return render_template('LocationsPage.html', location_list=location_list)
 
 @app.route('/transactions')

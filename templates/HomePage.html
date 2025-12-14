@@ -227,7 +227,7 @@
         navBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 const page = this.getAttribute('data-page');
-                if (page === '/items' || page === '/dashboard') {
+                if (page === '/items' || page === '/dashboard' || page === '/locations' || page === '/transactions' || page === '/suppliers' || page === '/reports' || page === '/users') {
                     // Navigate to full pages instead of loading dynamically
                     window.location.href = page;
                 } else {

@@ -315,7 +315,7 @@
             <!-- Navigation items (now with data-page attributes for dynamic loading) -->
             <button
                 class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-                data-page="/dashboard">
+                data-page="/home">
                 <!-- LayoutDashboardIcon SVG -->
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -406,12 +406,11 @@
         <div class="border-t border-gray-200 p-4">
             <div class="flex items-center mb-3">
                 <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span class="text-sm font-medium text-gray-700">J</span>
-                    <!-- Placeholder: currentUser.fullName.charAt(0) -->
+                    <span class="text-sm font-medium text-gray-700">{{ first_name[0] }}</span>
                 </div>
                 <div class="ml-3">
-                    <p class="text-sm font-medium text-gray-900">John Doe</p> <!-- Placeholder: currentUser.fullName -->
-                    <p class="text-xs text-gray-500 capitalize">admin</p> <!-- Placeholder: currentUser.role -->
+                    <p class="text-sm font-medium text-gray-900">{{ first_name }}</p>
+                    <p class="text-xs text-gray-500 capitalize">{{ role }}</p>
                 </div>
             </div>
             <button
@@ -456,9 +455,16 @@
             <div class="space-y-6">
                 <!-- Header -->
                 <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900">Items</h1>
-                        <p class="text-gray-600 mt-1">Manage your inventory items</p>
+                    <div class="flex items-center">
+                        <button onclick="window.location.href='/home'" class="mr-4 text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Items</h1>
+                            <p class="text-gray-600 mt-1">Manage your inventory items</p>
+                        </div>
                     </div>
                     <button class="btn btn-primary" onclick="openModal()">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -607,12 +613,16 @@
             backdrop.classList.remove('open');
         });
 
-        // Navigation logic using window.location.href
+        // Navigation logic
         const navBtns = document.querySelectorAll('.nav-btn');
         navBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 const page = this.getAttribute('data-page');
-                window.location.href = page;
+                if (page === '/dashboard') {
+                    window.location.replace(page);
+                } else {
+                    window.location.href = page;
+                }
             });
         });
 

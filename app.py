@@ -144,10 +144,12 @@ class Location(db.Model):
             num = 1
         return f'LOC{num:03d}'
 
-    def getFullPath(self):
+    @property
+    def fullPath(self):
         return f"{self.warehouseId}-{self.aisle}-{self.rack}-{self.shelf}"
 
-    def getCurrentStock(self):
+    @property
+    def currentStock(self):
         # Calculate current stock from transactions (sum of quantities for receive minus issue at this location)
         receive = db.session.query(func.sum(Transaction.quantity)).filter(Transaction.locationId == self.locationId, Transaction.type == 'receive').scalar() or 0
         issue = db.session.query(func.sum(Transaction.quantity)).filter(Transaction.locationId == self.locationId, Transaction.type == 'issue').scalar() or 0
@@ -233,13 +235,14 @@ def dashboard():
 def items():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    return render_template('ItemsPage.html')
+    return render_template('ItemsPage.html', first_name=session['first_name'], role=session['role'])
 
 @app.route('/locations')
 def locations():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    return render_template('LocationsPage.html')
+    location_list = Location.query.all()
+    return render_template('LocationsPage.html', location_list=location_list)
 
 @app.route('/transactions')
 def transactions():
@@ -251,7 +254,8 @@ def transactions():
 def suppliers():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    return render_template('SuppliersPage.html')
+    supplier_list = Supplier.query.all()
+    return render_template('SuppliersPage.html', supplier_list=supplier_list)
 
 @app.route('/reports')
 def reports():
@@ -348,6 +352,90 @@ def search_items():
         'supplierId': item.supplierId,
         'status': 'In Stock' if item.totalStock > item.reorderPoint else 'Low Stock'
     } for item in items])
+
+@app.route('/api/locations', methods=['GET'])
+def get_locations():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    locations = Location.query.all()
+    return jsonify([{
+        'locationId': location.locationId,
+        'warehouseId': location.warehouseId,
+        'aisle': location.aisle,
+        'rack': location.rack,
+        'shelf': location.shelf,
+        'fullPath': location.fullPath,
+        'capacity': location.capacity,
+        'currentStock': location.currentStock
+    } for location in locations])
+
+@app.route('/api/locations', methods=['POST'])
+def add_location():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    data = request.get_json()
+    new_location = Location(
+        locationId=Location.get_next_id(),
+        warehouseId=data['warehouseId'],
+        aisle=data['aisle'],
+        rack=data['rack'],
+        shelf=data['shelf'],
+        capacity=data['capacity']
+    )
+    db.session.add(new_location)
+    db.session.commit()
+    return jsonify({'message': 'Location added successfully'}), 201
+
+@app.route('/api/locations/search', methods=['GET'])
+def search_locations():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    query = request.args.get('q', '')
+    locations = Location.query.filter(
+        or_(Location.locationId.contains(query), Location.warehouseId.contains(query), Location.aisle.contains(query))
+    ).all()
+    return jsonify([{
+        'locationId': location.locationId,
+        'warehouseId': location.warehouseId,
+        'aisle': location.aisle,
+        'rack': location.rack,
+        'shelf': location.shelf,
+        'fullPath': location.fullPath,
+        'capacity': location.capacity,
+        'currentStock': location.currentStock
+    } for location in locations])
+
+@app.route('/api/suppliers', methods=['GET'])
+def get_suppliers():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    suppliers = Supplier.query.all()
+    return jsonify([{
+        'supplierId': supplier.supplierId,
+        'name': supplier.name,
+        'contact': supplier.contact,
+        'address': supplier.address,
+        'totalPurchases': supplier.get_total_purchases()
+    } for supplier in suppliers])
+
+@app.route('/api/suppliers', methods=['POST'])
+def add_supplier():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    try:
+        data = request.get_json()
+        new_supplier = Supplier(
+            supplierId=Supplier.get_next_id(),
+            name=data['name'],
+            contact=data['contact'],
+            address=data['address']
+        )
+        db.session.add(new_supplier)
+        db.session.commit()
+        return jsonify({'message': 'Supplier added successfully'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/logout')
 def logout():

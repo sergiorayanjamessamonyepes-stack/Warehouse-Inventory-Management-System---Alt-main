@@ -194,7 +194,10 @@ def signup():
         session['role'] = role
 
         # Redirect based on role
-        return redirect(url_for('dashboard'))
+        if role == 'admin':
+            return redirect(url_for('dashboard'))
+        else:
+            return redirect(url_for('dashboard_staff'))
 
     return render_template('SignUpPage.html')
 
@@ -211,8 +214,14 @@ def login():
             session['first_name'] = user.fullName.split()[0]  # Assuming first name is first part
             session['role'] = user.role
             session['userId'] = user.userId
-            return redirect(url_for('dashboard'))
+            print(f"Login successful: user={user.username}, role={user.role}, first_name={session['first_name']}")
+            # Redirect based on role
+            if user.role == 'admin':
+                return redirect(url_for('dashboard'))
+            else:
+                return redirect(url_for('dashboard_staff'))
         else:
+            print(f"Login failed: email={email}")
             flash('Invalid email or password.', 'error')
             return redirect(url_for('login'))
 
@@ -624,6 +633,109 @@ def get_low_stock_report():
         'supplierId': item.supplierId,
         'status': 'Low Stock'
     } for item in items])
+
+@app.route('/dashboard-staff')
+def dashboard_staff():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        # Query stats
+        total_items = ItemsList.query.count()
+        low_stock_items = ItemsList.query.filter(ItemsList.totalStock <= ItemsList.reorderPoint).count()
+        todays_transactions = Transaction.query.filter(func.date(Transaction.date) == date.today()).count()
+        active_locations = Location.query.count()
+
+        # Recent activity: fetch last 5 transactions with item names
+        recent_transactions = Transaction.query.join(ItemsList, Transaction.itemSku == ItemsList.sku).order_by(Transaction.date.desc()).limit(5).all()
+
+        # Format recent activity
+        recent_activity = []
+        for trans in recent_transactions:
+            # Calculate time ago
+            time_diff = datetime.now() - trans.date
+            if time_diff.days > 0:
+                time_ago = f"{time_diff.days} days ago"
+            elif time_diff.seconds // 3600 > 0:
+                time_ago = f"{time_diff.seconds // 3600} hours ago"
+            else:
+                time_ago = f"{time_diff.seconds // 60} minutes ago"
+
+            # Map type to description
+            type_desc = {
+                'receive': 'Stock received',
+                'issue': 'Stock issued',
+                'transfer': 'Stock transferred',
+                'adjustment': 'Stock adjusted'
+            }.get(trans.type, trans.type)
+
+            recent_activity.append({
+                'type': type_desc,
+                'item_name': trans.items_list.name,
+                'quantity': trans.quantity,
+                'time_ago': time_ago
+            })
+
+        return render_template('DashboardPageStaff.html',
+                               first_name=session['first_name'],
+                               role=session['role'],
+                               total_items=total_items,
+                               low_stock_items=low_stock_items,
+                               todays_transactions=todays_transactions,
+                               active_locations=active_locations,
+                               recent_activity=recent_activity)
+    except Exception as e:
+        print(f"Database error in dashboard_staff: {e}")
+        # Return a basic template or error page
+        return render_template('DashboardPageStaff.html',
+                               first_name=session['first_name'],
+                               role=session['role'],
+                               total_items=0,
+                               low_stock_items=0,
+                               todays_transactions=0,
+                               active_locations=0,
+                               recent_activity=[])
+
+@app.route('/items-staff')
+def items_staff():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    return render_template('ItemsPageStaff.html', first_name=session['first_name'], role=session['role'])
+
+@app.route('/locations-staff')
+def locations_staff():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    locations = Location.query.all()
+    location_list = [{
+        'locationId': location.locationId,
+        'warehouseId': location.warehouseId,
+        'aisle': location.aisle,
+        'rack': location.rack,
+        'shelf': location.shelf,
+        'fullPath': location.fullPath,
+        'capacity': location.capacity
+    } for location in locations]
+    return render_template('LocationsPageStaff.html', location_list=location_list, first_name=session['first_name'], role=session['role'])
+
+@app.route('/transactions-staff')
+def transactions_staff():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    return render_template('TransactionsPageStaff.html', first_name=session['first_name'], role=session['role'], userId=session['userId'])
+
+@app.route('/suppliers-staff')
+def suppliers_staff():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    supplier_list = Supplier.query.all()
+    return render_template('SuppliersPageStaff.html', supplier_list=supplier_list, first_name=session['first_name'], role=session['role'])
+
+@app.route('/reports-staff')
+def reports_staff():
+    if 'first_name' not in session:
+        return redirect(url_for('login'))
+    return render_template('ReportsPageStaff.html', first_name=session['first_name'], role=session['role'])
 
 @app.route('/logout')
 def logout():

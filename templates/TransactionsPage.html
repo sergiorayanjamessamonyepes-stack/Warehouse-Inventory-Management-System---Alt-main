@@ -197,41 +197,99 @@
         }
 
         /* Modal styles */
-        .modal {
+        .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
+            inset: 0;
+            z-index: 50;
+            overflow-y: auto;
+            display: none;
+            /* Hidden by default */
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(107, 114, 128, 0.75);
+            transition: opacity 0.3s;
         }
 
         .modal-content {
             background-color: white;
             border-radius: 0.5rem;
-            padding: 1.5rem;
-            width: 90%;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(1);
+            transition: transform 0.3s;
             max-width: 600px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            max-height: 90vh;
-            overflow-y: auto;
+            width: 100%;
+            margin: 2rem 0;
         }
 
-        .modal h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
+        .modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
             margin-bottom: 1rem;
+            padding: 1.25rem;
+        }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .modal-close-btn {
+            color: #9ca3af;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            color: #6b7280;
+        }
+
+        .close-icon {
+            height: 1.5rem;
+            width: 1.5rem;
+        }
+
+        .modal-body {
+            padding: 0 1.25rem 1.25rem;
         }
 
         .modal-footer {
+            background-color: #f9fafb;
+            padding: 0.75rem 1rem;
             display: flex;
-            justify-content: flex-end;
+            flex-direction: row-reverse;
             gap: 0.5rem;
-            margin-top: 1.5rem;
+        }
+
+        /* Button styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
         }
 
         /* Input styles */
@@ -324,7 +382,7 @@
             <!-- Navigation items (now with data-page attributes for dynamic loading) -->
             <button
                 class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-                data-page="/dashboard">
+                data-page="/home">
                 <!-- LayoutDashboardIcon SVG -->
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -483,15 +541,10 @@
                                 <th>Transaction ID</th>
                                 <th>Type</th>
                                 <th>Date</th>
-                                <th>User ID</th>
-                                <th>Item SKU</th>
+                                <th>Item</th>
                                 <th>Quantity</th>
+                                <th>User</th>
                                 <th>Notes</th>
-                                <th>Supplier ID</th>
-                                <th>From Location</th>
-                                <th>To Location</th>
-                                <th>Reason</th>
-                                <th>Location ID</th>
                             </tr>
                         </thead>
                         <tbody id="transactions-tbody">
@@ -500,39 +553,20 @@
                     </table>
                 </div>
 
-                <!-- Reports Section -->
-                <div class="card">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Transaction Reports</h3>
-                    <div class="space-y-4 text-sm text-gray-600">
-                        <div>
-                            <h4 class="font-medium text-gray-900">Transaction History Report</h4>
-                            <p>Complete audit trail of all inventory transactions including receives, issues, transfers, and adjustments.</p>
-                            <button class="mt-2 button secondary text-xs px-3 py-1" onclick="window.location.href='/reports'">
-                                View Full Report
-                            </button>
-                        </div>
-                        <div>
-                            <h4 class="font-medium text-gray-900">Current Inventory Report</h4>
-                            <p>Shows all items with their current stock levels, reorder points, and status.</p>
-                            <button class="mt-2 button secondary text-xs px-3 py-1" onclick="window.location.href='/reports'">
-                                View Full Report
-                            </button>
-                        </div>
-                        <div>
-                            <h4 class="font-medium text-gray-900">Low Stock Report</h4>
-                            <p>Lists items that are below their reorder point and need restocking.</p>
-                            <button class="mt-2 button secondary text-xs px-3 py-1" onclick="window.location.href='/reports'">
-                                View Full Report
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Modal -->
-                <div class="modal hidden" id="modal">
+                <div id="modal" class="modal-overlay">
+                    <div class="modal-backdrop"></div>
                     <div class="modal-content">
-                        <h2>New Transaction</h2>
-                        <form onsubmit="handleSubmit(event)">
+                        <div class="modal-header">
+                            <h3 class="modal-title">New Transaction</h3>
+                            <button class="modal-close-btn" id="modal-close-btn">
+                                <svg class="close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="modal-body">
                             <div class="space-y-4">
                                 <div class="input-group">
                                     <label class="input-label">Transaction Type</label>
@@ -558,38 +592,23 @@
 
                                 <div class="input-group" id="locationGroup">
                                     <label class="input-label">Location</label>
-                                    <div class="flex items-center space-x-2">
-                                        <select class="select flex-1" id="locationId" required>
-                                            <!-- Options populated by JS -->
-                                        </select>
-                                        <button type="button" class="button secondary text-sm px-3 py-1" onclick="openAddLocationModal()">
-                                            + Add New
-                                        </button>
-                                    </div>
+                                    <select class="select" id="locationId" required>
+                                        <!-- Options populated by JS -->
+                                    </select>
                                 </div>
 
                                 <div class="input-group hidden" id="fromLocationGroup">
                                     <label class="input-label">From Location</label>
-                                    <div class="flex items-center space-x-2">
-                                        <select class="select flex-1" id="fromLocationId" required>
-                                            <!-- Options populated by JS -->
-                                        </select>
-                                        <button type="button" class="button secondary text-sm px-3 py-1" onclick="openAddLocationModal()">
-                                            + Add New
-                                        </button>
-                                    </div>
+                                    <select class="select" id="fromLocationId" required>
+                                        <!-- Options populated by JS -->
+                                    </select>
                                 </div>
 
                                 <div class="input-group hidden" id="toLocationGroup">
                                     <label class="input-label">To Location</label>
-                                    <div class="flex items-center space-x-2">
-                                        <select class="select flex-1" id="toLocationId" required>
-                                            <!-- Options populated by JS -->
-                                        </select>
-                                        <button type="button" class="button secondary text-sm px-3 py-1" onclick="openAddLocationModal()">
-                                            + Add New
-                                        </button>
-                                    </div>
+                                    <select class="select" id="toLocationId" required>
+                                        <!-- Options populated by JS -->
+                                    </select>
                                 </div>
 
                                 <div class="input-group hidden" id="supplierGroup">
@@ -611,53 +630,13 @@
                                         placeholder="Optional notes about this transaction" rows="3"></textarea>
                                 </div>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="button secondary" onclick="closeModal()">Cancel</button>
-                                <button type="submit" class="button">Process Transaction</button>
-                            </div>
-                        </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="submit-btn">Process Transaction</button>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Add Location Modal -->
-                <div class="modal hidden" id="addLocationModal">
-                    <div class="modal-content">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-bold">Add New Location</h2>
-                            <button id="closeAddLocationModalBtn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-                        </div>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Warehouse ID</label>
-                                <input id="addWarehouseId" type="text" value="WH01"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Aisle</label>
-                                <input id="addAisle" type="text" placeholder="e.g., A"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Rack</label>
-                                <input id="addRack" type="text" placeholder="e.g., 1"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Shelf</label>
-                                <input id="addShelf" type="text" placeholder="e.g., 1"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Capacity</label>
-                                <input id="addCapacity" type="number" value="100"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
-                            </div>
-                        </div>
-                        <div class="flex justify-end mt-6 space-x-2">
-                            <button id="cancelAddLocationBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
-                            <button id="createAddLocationBtn" class="bg-blue-500 text-white px-4 py-2 rounded">Create</button>
-                        </div>
-                    </div>
             </div>
         </main>
     </div>
@@ -713,7 +692,8 @@
         let locations = [];
         let suppliers = [];
         let users = [];
-        const currentUser = { userId: '{{ userId }}' };
+        const userId = '{{ session.userId }}';
+
 
         // Function to load data from APIs
         async function loadData() {
@@ -750,7 +730,7 @@
             const tbody = document.getElementById('transactions-tbody');
             tbody.innerHTML = '';
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 2rem;">No transactions found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No transactions found</td></tr>';
                 return;
             }
             data.forEach(transaction => {
@@ -762,15 +742,10 @@
                 <td>${transaction.transId}</td>
                 <td><span class="badge ${badgeClass}">${transaction.type.toUpperCase()}</span></td>
                 <td>${new Date(transaction.date).toLocaleString()}</td>
-                <td>${transaction.userId}</td>
                 <td>${transaction.itemSku}</td>
                 <td>${transaction.quantity}</td>
+                <td>${transaction.userId}</td>
                 <td>${transaction.notes || ''}</td>
-                <td>${transaction.supplierId || ''}</td>
-                <td>${transaction.fromLocationId || ''}</td>
-                <td>${transaction.toLocationId || ''}</td>
-                <td>${transaction.reason || ''}</td>
-                <td>${transaction.locationId || ''}</td>
             `;
                 tbody.appendChild(row);
             });
@@ -826,13 +801,19 @@
         function openModal() {
             // Check if data is loaded
             if (items.length === 0 || locations.length === 0) {
-                alert('Loading data... Please wait a moment and try again.');
+                if (items.length === 0 && locations.length === 0) {
+                    alert('No items or locations found. Please add items and locations before creating a transaction.');
+                } else if (items.length === 0) {
+                    alert('No items found. Please add items before creating a transaction.');
+                } else {
+                    alert('No locations found. Please add locations before creating a transaction.');
+                }
                 return;
             }
 
             populateSelects();
             updateFormFields();
-            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modal').style.display = 'flex';
             // Reset form
             document.getElementById('quantity').value = '';
             document.getElementById('notes').value = '';
@@ -840,12 +821,22 @@
         }
 
         function closeModal() {
-            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('modal').style.display = 'none';
         }
 
+        // Event listeners for modal
+        const modal = document.getElementById('modal');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const submitBtn = document.getElementById('submit-btn');
+
+        modalCloseBtn.addEventListener('click', closeModal);
+        document.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        submitBtn.addEventListener('click', handleSubmit);
+
         // Handle form submission
-        async function handleSubmit(event) {
-            event.preventDefault();
+        async function handleSubmit() {
 
             try {
                 const type = document.getElementById('transactionType').value;
@@ -882,10 +873,10 @@
                 // Prepare transaction data for API
                 const transactionData = {
                     type,
-                    userId: currentUser.userId,
                     notes,
                     itemSku,
-                    quantity
+                    quantity,
+                    userId
                 };
 
                 if (type === 'receive') {

@@ -412,7 +412,7 @@
             <!-- Navigation items (now with data-page attributes for dynamic loading) -->
             <button
                 class="nav-btn w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
-                data-page="/dashboard">
+                data-page="/home">
                 <!-- LayoutDashboardIcon SVG -->
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -596,11 +596,11 @@
                                 {% if supplier_list %}
                                 {% for supplier in supplier_list %}
                                 <tr>
-                                    <td>{{ supplier.supplierId }}</td>
-                                    <td>{{ supplier.name }}</td>
-                                    <td>{{ supplier.contact }}</td>
-                                    <td>{{ supplier.address }}</td>
-                                    <td>${{ supplier.get_total_purchases() }}</td>
+                                    <td class="px-4 py-2">{{ supplier.supplierId }}</td>
+                                    <td class="px-4 py-2">{{ supplier.name }}</td>
+                                    <td class="px-4 py-2">{{ supplier.contact }}</td>
+                                    <td class="px-4 py-2">{{ supplier.address }}</td>
+                                    <td class="px-4 py-2">{{ supplier.totalPurchases }}</td>
                                 </tr>
                                 {% endfor %}
                                 {% endif %}
@@ -720,66 +720,73 @@
             });
         });
 
-        // Suppliers page specific script
-        let suppliers = [];  // Global array for suppliers data
+        // Global suppliers array - initialize with server-side data
+        const suppliersDataElement = document.getElementById('suppliers-data');
+        var suppliers = suppliersDataElement ? JSON.parse(suppliersDataElement.textContent) : [];
 
-        // Populate suppliers from server-rendered data
-        function initializeSuppliers() {
-            const tbody = document.getElementById('suppliers-table');
-            const rows = tbody.querySelectorAll('tr');
-            suppliers = Array.from(rows).map(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length === 5) {
-                    return {
-                        supplierId: cells[0].textContent,
-                        name: cells[1].textContent,
-                        contact: cells[2].textContent,
-                        address: cells[3].textContent,
-                        totalPurchases: parseFloat(cells[4].textContent.replace('$', ''))
-                    };
-                }
-                return null;
-            }).filter(s => s !== null);
-        }
-
+        // Fetch suppliers from API
         async function fetchSuppliers() {
             try {
-                const response = await fetch('/api/suppliers', { credentials: 'include' });
-                if (!response.ok) throw new Error('Failed to fetch suppliers');
-                suppliers = await response.json();
-                renderTable(suppliers);
+                const response = await fetch('/api/suppliers?_=' + Date.now()); // Cache-busting
+                if (response.ok) {
+                    suppliers = await response.json();
+                } else {
+                    console.error('Failed to fetch suppliers');
+                }
             } catch (error) {
                 console.error('Error fetching suppliers:', error);
-                alert('Error loading suppliers');
             }
         }
 
+        // Render table
         function renderTable(data) {
             const tbody = document.getElementById('suppliers-table');
             tbody.innerHTML = '';
             data.forEach(s => {
-                const row = `<tr>
-                <td>${s.supplierId}</td>
-                <td>${s.name}</td>
-                <td>${s.contact}</td>
-                <td>${s.address}</td>
-                <td>$${s.totalPurchases.toFixed(2)}</td>
-            </tr>`;
-                tbody.innerHTML += row;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                <td class="px-4 py-2">${s.supplierId}</td>
+                <td class="px-4 py-2">${s.name}</td>
+                <td class="px-4 py-2">${s.contact}</td>
+                <td class="px-4 py-2">${s.address}</td>
+                <td class="px-4 py-2">${s.totalPurchases}</td>
+            `;
+                tbody.appendChild(row);
             });
         }
 
-        async function searchSuppliers(query) {
+        // Initialize page - only refresh data on navigation, not initial load
+        async function init() {
+            await fetchSuppliers();
+            renderTable(suppliers);
+        }
+
+        // Initial render with server-side data
+        renderTable(suppliers);
+
+        // Ensure data loads on page navigation and when returning to page
+        window.addEventListener('pageshow', () => {
+            init();
+        });
+
+        // Also reload data when page becomes visible (handles tab switching, etc.)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                init();
+            }
+        });
+
+        // Search functionality
+        document.getElementById('search-input').addEventListener('input', debounce(async () => {
+            const query = document.getElementById('search-input').value.trim();
             try {
-                const response = await fetch(`/api/suppliers/search?q=${encodeURIComponent(query)}`, { credentials: 'include' });
-                if (!response.ok) throw new Error('Failed to search suppliers');
-                const data = await response.json();
-                renderTable(data);
+                const response = await fetch(`/api/suppliers/search?q=${encodeURIComponent(query)}`);
+                const searchResults = await response.json();
+                renderTable(searchResults);
             } catch (error) {
                 console.error('Error searching suppliers:', error);
-                alert('Error searching suppliers');
             }
-        }
+        }, 300));
 
         function openModal() {
             document.getElementById('modal-overlay').style.display = 'flex';
@@ -796,16 +803,7 @@
         // Add event listeners for modal
         document.getElementById('modal-close-btn').addEventListener('click', closeModal);
         document.getElementById('cancel-btn').addEventListener('click', closeModal);
-        document.getElementById('modal-overlay').addEventListener('click', function (e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        // Add event listener for search input
-        document.getElementById('search-input').addEventListener('input', function () {
-            searchSuppliers(this.value);
-        });
+        document.querySelector('.modal-backdrop').addEventListener('click', closeModal);
 
         async function submitForm() {
             const name = document.getElementById('name').value.trim();
@@ -820,27 +818,39 @@
             try {
                 const response = await fetch('/api/suppliers', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, contact, address })
                 });
-                if (!response.ok) {
+
+                if (response.ok) {
+                    alert('Supplier added successfully!');
+                    closeModal();
+                    await fetchSuppliers();
+                    renderTable(suppliers);
+                } else {
                     const error = await response.json();
-                    throw new Error(error.error || 'Failed to add supplier');
+                    alert('Error: ' + error.error);
                 }
-                alert('Supplier added successfully');
-                closeModal();
-                location.reload();  // Reload the page to show updated data
             } catch (error) {
-                console.error('Error adding supplier:', error);
-                alert(error.message);
+                alert('Error: ' + error.message);
             }
         }
 
         // Add event listener for submit button
         document.getElementById('submit-btn').addEventListener('click', submitForm);
 
+        // Debounce function for search
+        function debounce(func, delay) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+    </script>
 
+    <script id="suppliers-data" type="application/json">
+        {{ supplier_list| tojson }}
     </script>
 </body>
 

@@ -1,11 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, Response, jsonify, flash
-from functools import wraps
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, or_  # For aggregating and search filtering
-import pymysql
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, date
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Set a unique and secret key for sessions
@@ -13,26 +10,10 @@ app.secret_key = 'your_secret_key_here'  # Set a unique and secret key for sessi
 ADMIN_CODE = "SECRET123"
 
 # App configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Dreakmaaram123@localhost/flask_app'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost/flask_app'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Recommended to avoid warnings
 
 db = SQLAlchemy(app)
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'first_name' not in session:
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'first_name' not in session or session['role'] != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 # New Supplier model (supplierId as string, auto-increments as SUP001, etc.)
 class Supplier(db.Model):
@@ -75,8 +56,6 @@ class Transaction(db.Model):
     itemSku = db.Column(db.String(80), db.ForeignKey('items_list.sku'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     locationId = db.Column(db.String(10), nullable=False)  # Location where transaction occurred
-
-    items_list = db.relationship('ItemsList', foreign_keys=[itemSku], backref='transactions')
 
     @classmethod
     def get_next_trans_id(cls):
@@ -176,7 +155,7 @@ def landingpage():
 def home():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    return render_template('HomePage.html', first_name=session['first_name'], role=session['role'])
+    return render_template('DashboardPage.html', first_name=session['first_name'], role=session['role'])
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -206,7 +185,7 @@ def signup():
         session['role'] = role
 
         # Redirect based on role
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('admin_dashboard' if role == 'admin' else 'home'))
 
     return render_template('SignUpPage.html')
 
@@ -223,7 +202,7 @@ def login():
             session['first_name'] = user.fullName.split()[0]  # Assuming first name is first part
             session['role'] = user.role
             session['userId'] = user.userId
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('home'))
         else:
             flash('Invalid email or password.', 'error')
             return redirect(url_for('login'))
@@ -241,51 +220,7 @@ def admin_dashboard():
 def dashboard():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-
-    # Query stats
-    total_items = ItemsList.query.count()
-    low_stock_items = ItemsList.query.filter(ItemsList.totalStock <= ItemsList.reorderPoint).count()
-    todays_transactions = Transaction.query.filter(func.date(Transaction.date) == date.today()).count()
-    active_locations = Location.query.count()
-
-    # Recent activity: fetch last 5 transactions with item names
-    recent_transactions = Transaction.query.join(ItemsList, Transaction.itemSku == ItemsList.sku).order_by(Transaction.date.desc()).limit(5).all()
-
-    # Format recent activity
-    recent_activity = []
-    for trans in recent_transactions:
-        # Calculate time ago
-        time_diff = datetime.now() - trans.date
-        if time_diff.days > 0:
-            time_ago = f"{time_diff.days} days ago"
-        elif time_diff.seconds // 3600 > 0:
-            time_ago = f"{time_diff.seconds // 3600} hours ago"
-        else:
-            time_ago = f"{time_diff.seconds // 60} minutes ago"
-
-        # Map type to description
-        type_desc = {
-            'receive': 'Stock received',
-            'issue': 'Stock issued',
-            'transfer': 'Stock transferred',
-            'adjustment': 'Stock adjusted'
-        }.get(trans.type, trans.type)
-
-        recent_activity.append({
-            'type': type_desc,
-            'item_name': trans.items_list.name,
-            'quantity': trans.quantity,
-            'time_ago': time_ago
-        })
-
-    return render_template('DashboardPage.html',
-                           first_name=session['first_name'],
-                           role=session['role'],
-                           total_items=total_items,
-                           low_stock_items=low_stock_items,
-                           todays_transactions=todays_transactions,
-                           active_locations=active_locations,
-                           recent_activity=recent_activity)
+    return render_template('DashboardPage.html', first_name=session['first_name'], role=session['role'])
 
 @app.route('/items')
 def items():
@@ -320,7 +255,14 @@ def transactions():
 def suppliers():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    supplier_list = Supplier.query.all()
+    suppliers = Supplier.query.all()
+    supplier_list = [{
+        'supplierId': s.supplierId,
+        'name': s.name,
+        'contact': s.contact,
+        'address': s.address,
+        'totalPurchases': s.get_total_purchases()
+    } for s in suppliers]
     return render_template('SuppliersPage.html', supplier_list=supplier_list, first_name=session['first_name'], role=session['role'])
 
 @app.route('/reports')
@@ -343,8 +285,9 @@ def item_details(sku):
     return render_template('ItemPage.html', item=item)
 
 @app.route('/api/items', methods=['GET'])
-@login_required
 def get_items():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
     items = ItemsList.query.all()
     return jsonify([{
         'sku': item.sku,
@@ -358,8 +301,9 @@ def get_items():
     } for item in items])
 
 @app.route('/api/items', methods=['POST'])
-@login_required
 def add_item():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json()
     new_item = ItemsList(
         sku=ItemsList.get_next_sku(),
@@ -375,8 +319,9 @@ def add_item():
     return jsonify({'message': 'Item added successfully'}), 201
 
 @app.route('/api/items/<sku>', methods=['PUT'])
-@login_required
 def update_item(sku):
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json()
     item = ItemsList.query.get_or_404(sku)
     item.name = data['name']
@@ -389,16 +334,18 @@ def update_item(sku):
     return jsonify({'message': 'Item updated successfully'})
 
 @app.route('/api/items/<sku>', methods=['DELETE'])
-@login_required
 def delete_item(sku):
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
     item = ItemsList.query.get_or_404(sku)
     db.session.delete(item)
     db.session.commit()
     return jsonify({'message': 'Item deleted successfully'})
 
 @app.route('/api/items/search', methods=['GET'])
-@login_required
 def search_items():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
     query = request.args.get('q', '')
     items = ItemsList.query.filter(
         or_(ItemsList.name.contains(query), ItemsList.sku.contains(query))
@@ -415,8 +362,9 @@ def search_items():
     } for item in items])
 
 @app.route('/api/locations', methods=['GET'])
-@login_required
 def get_locations():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
     locations = Location.query.all()
     return jsonify([{
         'locationId': location.locationId,
@@ -430,8 +378,9 @@ def get_locations():
     } for location in locations])
 
 @app.route('/api/locations', methods=['POST'])
-@login_required
 def add_location():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json()
     new_location = Location(
         locationId=Location.get_next_id(),
@@ -446,8 +395,9 @@ def add_location():
     return jsonify({'message': 'Location added successfully'}), 201
 
 @app.route('/api/locations/search', methods=['GET'])
-@login_required
 def search_locations():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
     query = request.args.get('q', '')
     locations = Location.query.filter(
         or_(Location.locationId.contains(query), Location.warehouseId.contains(query), Location.aisle.contains(query))
@@ -561,22 +511,6 @@ def search_users():
         'fullName': user.fullName,
         'role': user.role.upper()
     } for user in users])
-
-@app.route('/api/suppliers/search', methods=['GET'])
-def search_suppliers():
-    if 'first_name' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    query = request.args.get('q', '')
-    suppliers = Supplier.query.filter(
-        or_(Supplier.name.contains(query), Supplier.supplierId.contains(query))
-    ).all()
-    return jsonify([{
-        'supplierId': supplier.supplierId,
-        'name': supplier.name,
-        'contact': supplier.contact,
-        'address': supplier.address,
-        'totalPurchases': supplier.get_total_purchases()
-    } for supplier in suppliers])
 
 @app.route('/api/transactions', methods=['GET'])
 def get_transactions():

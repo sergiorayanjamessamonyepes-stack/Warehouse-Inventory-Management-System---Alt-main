@@ -1,19 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, session, Response, jsonify, flash
+from functools import wraps
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, or_  # For aggregating and search filtering
 import pymysql
-import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date
-
-def get_db_connection():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Dreakmaaram123",
-        database="flask_app"
-    )
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Set a unique and secret key for sessions
@@ -25,6 +17,22 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Dreakmaaram123@loc
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Recommended to avoid warnings
 
 db = SQLAlchemy(app)
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'first_name' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'first_name' not in session or session['role'] != 'admin':
+            return jsonify({'error': 'Unauthorized'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 # New Supplier model (supplierId as string, auto-increments as SUP001, etc.)
 class Supplier(db.Model):
@@ -335,9 +343,8 @@ def item_details(sku):
     return render_template('ItemPage.html', item=item)
 
 @app.route('/api/items', methods=['GET'])
+@login_required
 def get_items():
-    if 'first_name' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
     items = ItemsList.query.all()
     return jsonify([{
         'sku': item.sku,
@@ -351,9 +358,8 @@ def get_items():
     } for item in items])
 
 @app.route('/api/items', methods=['POST'])
+@login_required
 def add_item():
-    if 'first_name' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json()
     new_item = ItemsList(
         sku=ItemsList.get_next_sku(),
@@ -369,9 +375,8 @@ def add_item():
     return jsonify({'message': 'Item added successfully'}), 201
 
 @app.route('/api/items/<sku>', methods=['PUT'])
+@login_required
 def update_item(sku):
-    if 'first_name' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json()
     item = ItemsList.query.get_or_404(sku)
     item.name = data['name']
@@ -384,18 +389,16 @@ def update_item(sku):
     return jsonify({'message': 'Item updated successfully'})
 
 @app.route('/api/items/<sku>', methods=['DELETE'])
+@login_required
 def delete_item(sku):
-    if 'first_name' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
     item = ItemsList.query.get_or_404(sku)
     db.session.delete(item)
     db.session.commit()
     return jsonify({'message': 'Item deleted successfully'})
 
 @app.route('/api/items/search', methods=['GET'])
+@login_required
 def search_items():
-    if 'first_name' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
     query = request.args.get('q', '')
     items = ItemsList.query.filter(
         or_(ItemsList.name.contains(query), ItemsList.sku.contains(query))
@@ -412,9 +415,8 @@ def search_items():
     } for item in items])
 
 @app.route('/api/locations', methods=['GET'])
+@login_required
 def get_locations():
-    if 'first_name' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
     locations = Location.query.all()
     return jsonify([{
         'locationId': location.locationId,
@@ -428,9 +430,8 @@ def get_locations():
     } for location in locations])
 
 @app.route('/api/locations', methods=['POST'])
+@login_required
 def add_location():
-    if 'first_name' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json()
     new_location = Location(
         locationId=Location.get_next_id(),
@@ -445,9 +446,8 @@ def add_location():
     return jsonify({'message': 'Location added successfully'}), 201
 
 @app.route('/api/locations/search', methods=['GET'])
+@login_required
 def search_locations():
-    if 'first_name' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
     query = request.args.get('q', '')
     locations = Location.query.filter(
         or_(Location.locationId.contains(query), Location.warehouseId.contains(query), Location.aisle.contains(query))

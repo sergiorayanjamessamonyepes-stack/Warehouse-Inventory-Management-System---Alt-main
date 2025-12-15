@@ -12,7 +12,7 @@ app.secret_key = 'your_secret_key_here'  # Set a unique and secret key for sessi
 ADMIN_CODE = "SECRET123"
 
 # App configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost/flask_app'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Dreakmaaram123@localhost/flask_app'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Recommended to avoid warnings
 
 db = SQLAlchemy(app)
@@ -594,6 +594,24 @@ def add_transaction():
     data = request.get_json()
     trans_type = data['type']
     user_id = data['userId']  # Assuming from session or data
+
+    # Get the item to update stock
+    item = ItemsList.query.get_or_404(data['itemSku'])
+
+    # Update stock based on transaction type
+    if trans_type == 'receive':
+        if data['quantity'] <= 0:
+            return jsonify({'error': 'Quantity must be positive for receive'}), 400
+        item.totalStock += data['quantity']
+    elif trans_type == 'issue':
+        if data['quantity'] <= 0:
+            return jsonify({'error': 'Quantity must be positive for issue'}), 400
+        if item.totalStock < data['quantity']:
+            return jsonify({'error': 'Insufficient stock'}), 400
+        item.totalStock -= data['quantity']
+    elif trans_type == 'adjustment':
+        item.totalStock += data['quantity']  # Can be negative
+    # For transfer, no change to total stock
 
     new_trans = Transaction(
         transId=Transaction.get_next_trans_id(),

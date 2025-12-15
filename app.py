@@ -5,6 +5,7 @@ from sqlalchemy import func, or_  # For aggregating and search filtering
 import pymysql
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, date
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -66,6 +67,8 @@ class Transaction(db.Model):
     itemSku = db.Column(db.String(80), db.ForeignKey('items_list.sku'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     locationId = db.Column(db.String(10), nullable=False)  # Location where transaction occurred
+
+    items_list = db.relationship('ItemsList', foreign_keys=[itemSku], backref='transactions')
 
     @classmethod
     def get_next_trans_id(cls):
@@ -230,7 +233,51 @@ def admin_dashboard():
 def dashboard():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    return render_template('DashboardPage.html', first_name=session['first_name'], role=session['role'])
+
+    # Query stats
+    total_items = ItemsList.query.count()
+    low_stock_items = ItemsList.query.filter(ItemsList.totalStock <= ItemsList.reorderPoint).count()
+    todays_transactions = Transaction.query.filter(func.date(Transaction.date) == date.today()).count()
+    active_locations = Location.query.count()
+
+    # Recent activity: fetch last 5 transactions with item names
+    recent_transactions = Transaction.query.join(ItemsList, Transaction.itemSku == ItemsList.sku).order_by(Transaction.date.desc()).limit(5).all()
+
+    # Format recent activity
+    recent_activity = []
+    for trans in recent_transactions:
+        # Calculate time ago
+        time_diff = datetime.now() - trans.date
+        if time_diff.days > 0:
+            time_ago = f"{time_diff.days} days ago"
+        elif time_diff.seconds // 3600 > 0:
+            time_ago = f"{time_diff.seconds // 3600} hours ago"
+        else:
+            time_ago = f"{time_diff.seconds // 60} minutes ago"
+
+        # Map type to description
+        type_desc = {
+            'receive': 'Stock received',
+            'issue': 'Stock issued',
+            'transfer': 'Stock transferred',
+            'adjustment': 'Stock adjusted'
+        }.get(trans.type, trans.type)
+
+        recent_activity.append({
+            'type': type_desc,
+            'item_name': trans.items_list.name,
+            'quantity': trans.quantity,
+            'time_ago': time_ago
+        })
+
+    return render_template('DashboardPage.html',
+                           first_name=session['first_name'],
+                           role=session['role'],
+                           total_items=total_items,
+                           low_stock_items=low_stock_items,
+                           todays_transactions=todays_transactions,
+                           active_locations=active_locations,
+                           recent_activity=recent_activity)
 
 @app.route('/items')
 def items():

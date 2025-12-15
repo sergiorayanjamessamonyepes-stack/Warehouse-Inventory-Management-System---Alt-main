@@ -483,16 +483,49 @@
                                 <th>Transaction ID</th>
                                 <th>Type</th>
                                 <th>Date</th>
-                                <th>Item</th>
+                                <th>User ID</th>
+                                <th>Item SKU</th>
                                 <th>Quantity</th>
-                                <th>User</th>
                                 <th>Notes</th>
+                                <th>Supplier ID</th>
+                                <th>From Location</th>
+                                <th>To Location</th>
+                                <th>Reason</th>
+                                <th>Location ID</th>
                             </tr>
                         </thead>
                         <tbody id="transactions-tbody">
                             <!-- Rows will be populated by JavaScript -->
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Reports Section -->
+                <div class="card">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Transaction Reports</h3>
+                    <div class="space-y-4 text-sm text-gray-600">
+                        <div>
+                            <h4 class="font-medium text-gray-900">Transaction History Report</h4>
+                            <p>Complete audit trail of all inventory transactions including receives, issues, transfers, and adjustments.</p>
+                            <button class="mt-2 button secondary text-xs px-3 py-1" onclick="window.location.href='/reports'">
+                                View Full Report
+                            </button>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Current Inventory Report</h4>
+                            <p>Shows all items with their current stock levels, reorder points, and status.</p>
+                            <button class="mt-2 button secondary text-xs px-3 py-1" onclick="window.location.href='/reports'">
+                                View Full Report
+                            </button>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Low Stock Report</h4>
+                            <p>Lists items that are below their reorder point and need restocking.</p>
+                            <button class="mt-2 button secondary text-xs px-3 py-1" onclick="window.location.href='/reports'">
+                                View Full Report
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Modal -->
@@ -525,23 +558,38 @@
 
                                 <div class="input-group" id="locationGroup">
                                     <label class="input-label">Location</label>
-                                    <select class="select" id="locationId" required>
-                                        <!-- Options populated by JS -->
-                                    </select>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="select flex-1" id="locationId" required>
+                                            <!-- Options populated by JS -->
+                                        </select>
+                                        <button type="button" class="button secondary text-sm px-3 py-1" onclick="openAddLocationModal()">
+                                            + Add New
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="input-group hidden" id="fromLocationGroup">
                                     <label class="input-label">From Location</label>
-                                    <select class="select" id="fromLocationId" required>
-                                        <!-- Options populated by JS -->
-                                    </select>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="select flex-1" id="fromLocationId" required>
+                                            <!-- Options populated by JS -->
+                                        </select>
+                                        <button type="button" class="button secondary text-sm px-3 py-1" onclick="openAddLocationModal()">
+                                            + Add New
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="input-group hidden" id="toLocationGroup">
                                     <label class="input-label">To Location</label>
-                                    <select class="select" id="toLocationId" required>
-                                        <!-- Options populated by JS -->
-                                    </select>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="select flex-1" id="toLocationId" required>
+                                            <!-- Options populated by JS -->
+                                        </select>
+                                        <button type="button" class="button secondary text-sm px-3 py-1" onclick="openAddLocationModal()">
+                                            + Add New
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="input-group hidden" id="supplierGroup">
@@ -570,6 +618,46 @@
                         </form>
                     </div>
                 </div>
+
+                <!-- Add Location Modal -->
+                <div class="modal hidden" id="addLocationModal">
+                    <div class="modal-content">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold">Add New Location</h2>
+                            <button id="closeAddLocationModalBtn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Warehouse ID</label>
+                                <input id="addWarehouseId" type="text" value="WH01"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Aisle</label>
+                                <input id="addAisle" type="text" placeholder="e.g., A"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Rack</label>
+                                <input id="addRack" type="text" placeholder="e.g., 1"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Shelf</label>
+                                <input id="addShelf" type="text" placeholder="e.g., 1"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Capacity</label>
+                                <input id="addCapacity" type="number" value="100"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded" required>
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-6 space-x-2">
+                            <button id="cancelAddLocationBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+                            <button id="createAddLocationBtn" class="bg-blue-500 text-white px-4 py-2 rounded">Create</button>
+                        </div>
+                    </div>
             </div>
         </main>
     </div>
@@ -625,7 +713,7 @@
         let locations = [];
         let suppliers = [];
         let users = [];
-        const currentUser = { userId: 'USER001' }; // TODO: Get from session
+        const currentUser = { userId: '{{ userId }}' };
 
         // Function to load data from APIs
         async function loadData() {
@@ -662,7 +750,7 @@
             const tbody = document.getElementById('transactions-tbody');
             tbody.innerHTML = '';
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No transactions found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 2rem;">No transactions found</td></tr>';
                 return;
             }
             data.forEach(transaction => {
@@ -674,10 +762,15 @@
                 <td>${transaction.transId}</td>
                 <td><span class="badge ${badgeClass}">${transaction.type.toUpperCase()}</span></td>
                 <td>${new Date(transaction.date).toLocaleString()}</td>
+                <td>${transaction.userId}</td>
                 <td>${transaction.itemSku}</td>
                 <td>${transaction.quantity}</td>
-                <td>${transaction.userId}</td>
                 <td>${transaction.notes || ''}</td>
+                <td>${transaction.supplierId || ''}</td>
+                <td>${transaction.fromLocationId || ''}</td>
+                <td>${transaction.toLocationId || ''}</td>
+                <td>${transaction.reason || ''}</td>
+                <td>${transaction.locationId || ''}</td>
             `;
                 tbody.appendChild(row);
             });

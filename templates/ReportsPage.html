@@ -444,7 +444,7 @@
                 columns = ['SKU', 'Name', 'Total Stock', 'Reorder Point', 'Supplier ID', 'Status'];
             } else if (type === 'transactions') {
                 url = '/api/transactions';
-                columns = ['Transaction ID', 'Type', 'Date', 'User ID', 'Item SKU', 'Quantity', 'Notes', 'Supplier ID', 'From Location', 'To Location', 'Reason', 'Location ID'];
+                columns = ['Transaction ID', 'Type', 'Date', 'User ID', 'Item SKU', 'Quantity', 'Notes', 'Supplier ID', 'Location ID'];
             } else if (type === 'low-stock') {
                 url = '/api/reports/low-stock';
                 columns = ['SKU', 'Name', 'Total Stock', 'Reorder Point', 'Supplier ID', 'Status'];
@@ -485,7 +485,18 @@
                         if (col === 'Location ID') key = 'locationId';
                         if (col === 'Total Stock') key = 'totalStock';
                         if (col === 'Reorder Point') key = 'reorderPoint';
-                        td.textContent = item[key] || '';
+                        let value = item[key] || '';
+                        if (col === 'Date' && value) {
+                            value = new Date(value).toLocaleString();
+                        } else if (col === 'Type' && value) {
+                            const badgeClass = value === 'receive' ? 'badge-success' :
+                                value === 'issue' ? 'badge-warning' :
+                                    value === 'transfer' ? 'badge-info' : 'badge-default';
+                            td.innerHTML = `<span class="badge ${badgeClass}">${value.toUpperCase()}</span>`;
+                            tr.appendChild(td);
+                            return; // Skip setting textContent
+                        }
+                        td.textContent = value;
                         tr.appendChild(td);
                     });
                     reportBody.appendChild(tr);
@@ -508,7 +519,7 @@
             if (type === 'inventory') {
                 columns = ['sku', 'name', 'totalStock', 'reorderPoint', 'supplierId', 'status'];
             } else if (type === 'transactions') {
-                columns = ['transId', 'type', 'date', 'userId', 'itemSku', 'quantity', 'notes', 'supplierId', 'fromLocationId', 'toLocationId', 'reason', 'locationId'];
+                columns = ['transId', 'type', 'date', 'userId', 'itemSku', 'quantity', 'notes', 'supplierId', 'locationId'];
             } else if (type === 'low-stock') {
                 columns = ['sku', 'name', 'totalStock', 'reorderPoint', 'supplierId', 'status'];
             }

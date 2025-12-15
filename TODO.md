@@ -15,6 +15,7 @@
 - [x] Added API endpoint for low-stock reports: GET /api/reports/low-stock
 - [x] Updated ReportsPage.html to fetch data dynamically from API endpoints
 - [x] Implemented CSV export functionality for reports
+- [x] Connected dashboard to database: Added dynamic stats (total items, low stock items, today's transactions, active locations) and recent activity feed
 
 ## Next Steps
 - [x] Test the locations page to ensure no more TypeError (app is running)
@@ -22,3 +23,4 @@
 - [x] Check if database tables are created properly (app running with db.create_all())
 - [x] Test the suppliers add button functionality
 - [x] Test reports functionality: generate reports and export to CSV
+- [ ] Test dashboard functionality: verify stats and recent activity display correctly with sample data

@@ -488,10 +488,6 @@
                                 <th>Quantity</th>
                                 <th>Notes</th>
                                 <th>Supplier ID</th>
-                                <th>From Location</th>
-                                <th>To Location</th>
-                                <th>Reason</th>
-                                <th>Location ID</th>
                             </tr>
                         </thead>
                         <tbody id="transactions-tbody">
@@ -556,53 +552,11 @@
                                     <input type="number" class="input" id="quantity" required>
                                 </div>
 
-                                <div class="input-group" id="locationGroup">
-                                    <label class="input-label">Location</label>
-                                    <div class="flex items-center space-x-2">
-                                        <select class="select flex-1" id="locationId" required>
-                                            <!-- Options populated by JS -->
-                                        </select>
-                                        <button type="button" class="button secondary text-sm px-3 py-1" onclick="openAddLocationModal()">
-                                            + Add New
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="input-group hidden" id="fromLocationGroup">
-                                    <label class="input-label">From Location</label>
-                                    <div class="flex items-center space-x-2">
-                                        <select class="select flex-1" id="fromLocationId" required>
-                                            <!-- Options populated by JS -->
-                                        </select>
-                                        <button type="button" class="button secondary text-sm px-3 py-1" onclick="openAddLocationModal()">
-                                            + Add New
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="input-group hidden" id="toLocationGroup">
-                                    <label class="input-label">To Location</label>
-                                    <div class="flex items-center space-x-2">
-                                        <select class="select flex-1" id="toLocationId" required>
-                                            <!-- Options populated by JS -->
-                                        </select>
-                                        <button type="button" class="button secondary text-sm px-3 py-1" onclick="openAddLocationModal()">
-                                            + Add New
-                                        </button>
-                                    </div>
-                                </div>
-
                                 <div class="input-group hidden" id="supplierGroup">
                                     <label class="input-label">Supplier</label>
                                     <select class="select" id="supplierId" required>
                                         <!-- Options populated by JS -->
                                     </select>
-                                </div>
-
-                                <div class="input-group hidden" id="reasonGroup">
-                                    <label class="input-label">Reason</label>
-                                    <input type="text" class="input" id="reason"
-                                        placeholder="e.g., Damaged goods, Inventory count correction" required>
                                 </div>
 
                                 <div class="input-group">
@@ -710,7 +664,6 @@
         // Transactions Page JavaScript
         let transactions = [];
         let items = [];
-        let locations = [];
         let suppliers = [];
         let users = [];
         const currentUser = { userId: '{{ userId }}' };
@@ -718,17 +671,15 @@
         // Function to load data from APIs
         async function loadData() {
             try {
-                const [transactionsRes, itemsRes, locationsRes, suppliersRes, usersRes] = await Promise.all([
+                const [transactionsRes, itemsRes, suppliersRes, usersRes] = await Promise.all([
                     fetch('/api/transactions'),
                     fetch('/api/items'),
-                    fetch('/api/locations'),
                     fetch('/api/suppliers'),
                     fetch('/api/users')
                 ]);
 
                 transactions = await transactionsRes.json();
                 const itemsData = await itemsRes.json();
-                locations = await locationsRes.json();
                 suppliers = await suppliersRes.json();
                 users = await usersRes.json();
 
@@ -750,7 +701,7 @@
             const tbody = document.getElementById('transactions-tbody');
             tbody.innerHTML = '';
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 2rem;">No transactions found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No transactions found</td></tr>';
                 return;
             }
             data.forEach(transaction => {
@@ -767,10 +718,6 @@
                 <td>${transaction.quantity}</td>
                 <td>${transaction.notes || ''}</td>
                 <td>${transaction.supplierId || ''}</td>
-                <td>${transaction.fromLocationId || ''}</td>
-                <td>${transaction.toLocationId || ''}</td>
-                <td>${transaction.reason || ''}</td>
-                <td>${transaction.locationId || ''}</td>
             `;
                 tbody.appendChild(row);
             });
@@ -790,18 +737,6 @@
                 itemSelect.appendChild(option);
             });
 
-            const locationSelects = ['locationId', 'fromLocationId', 'toLocationId'];
-            locationSelects.forEach(id => {
-                const select = document.getElementById(id);
-                select.innerHTML = '';
-                locations.forEach(loc => {
-                    const option = document.createElement('option');
-                    option.value = loc.locationId;
-                    option.textContent = `${loc.locationId} - ${loc.fullPath}`;
-                    select.appendChild(option);
-                });
-            });
-
             const supplierSelect = document.getElementById('supplierId');
             supplierSelect.innerHTML = '';
             suppliers.forEach(sup => {
@@ -815,17 +750,13 @@
         // Update form fields based on transaction type
         function updateFormFields() {
             const type = document.getElementById('transactionType').value;
-            document.getElementById('locationGroup').classList.toggle('hidden', type === 'transfer');
-            document.getElementById('fromLocationGroup').classList.toggle('hidden', type !== 'transfer');
-            document.getElementById('toLocationGroup').classList.toggle('hidden', type !== 'transfer');
             document.getElementById('supplierGroup').classList.toggle('hidden', type !== 'receive');
-            document.getElementById('reasonGroup').classList.toggle('hidden', type !== 'adjustment');
         }
 
         // Modal functions
         function openModal() {
             // Check if data is loaded
-            if (items.length === 0 || locations.length === 0) {
+            if (items.length === 0) {
                 alert('Loading data... Please wait a moment and try again.');
                 return;
             }
@@ -836,7 +767,6 @@
             // Reset form
             document.getElementById('quantity').value = '';
             document.getElementById('notes').value = '';
-            document.getElementById('reason').value = '';
         }
 
         function closeModal() {
@@ -847,63 +777,37 @@
         async function handleSubmit(event) {
             event.preventDefault();
 
+            const type = document.getElementById('transactionType').value;
+            const itemSku = document.getElementById('itemSku').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const notes = document.getElementById('notes').value;
+
+            let supplierId = '';
+
+            if (type === 'receive') {
+                supplierId = document.getElementById('supplierId').value;
+            }
+
+            // Basic validation
+            if (!itemSku || !quantity || (type === 'receive' && !supplierId)) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            // Prepare transaction data for API
+            const transactionData = {
+                type,
+                userId: currentUser.userId,
+                notes,
+                itemSku,
+                quantity
+            };
+
+            if (type === 'receive') {
+                transactionData.supplierId = supplierId;
+            }
+
             try {
-                const type = document.getElementById('transactionType').value;
-                const itemSku = document.getElementById('itemSku').value;
-                const quantity = parseInt(document.getElementById('quantity').value);
-                const notes = document.getElementById('notes').value;
-
-                let locationId = '';
-                let toLocationId = '';
-                let supplierId = '';
-                let reason = '';
-
-                if (type === 'transfer') {
-                    locationId = document.getElementById('fromLocationId').value;
-                    toLocationId = document.getElementById('toLocationId').value;
-                } else {
-                    locationId = document.getElementById('locationId').value;
-                }
-
-                if (type === 'receive') {
-                    supplierId = document.getElementById('supplierId').value;
-                }
-
-                if (type === 'adjustment') {
-                    reason = document.getElementById('reason').value;
-                }
-
-                // Basic validation
-                if (!itemSku || !quantity || (type !== 'transfer' && !locationId) || (type === 'transfer' && (!locationId || !toLocationId)) || (type === 'receive' && !supplierId) || (type === 'adjustment' && !reason)) {
-                    alert('Please fill in all required fields');
-                    return;
-                }
-
-                // Prepare transaction data for API
-                const transactionData = {
-                    type,
-                    userId: currentUser.userId,
-                    notes,
-                    itemSku,
-                    quantity
-                };
-
-                if (type === 'receive') {
-                    transactionData.supplierId = supplierId;
-                    transactionData.locationId = locationId;
-                } else if (type === 'transfer') {
-                    transactionData.fromLocationId = locationId;
-                    transactionData.toLocationId = toLocationId;
-                    transactionData.locationId = locationId; // Use fromLocationId as the main location
-                } else if (type === 'issue') {
-                    transactionData.locationId = locationId;
-                } else if (type === 'adjustment') {
-                    transactionData.reason = reason;
-                    transactionData.locationId = locationId;
-                }
-
-                console.log('Submitting transaction:', transactionData); // Debug log
-
                 const response = await fetch('/api/transactions', {
                     method: 'POST',
                     headers: {
@@ -912,21 +816,16 @@
                     body: JSON.stringify(transactionData)
                 });
 
-                console.log('Response status:', response.status); // Debug log
-
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('Success result:', result); // Debug log
                     alert(`Transaction created successfully! Transaction ID: ${result.transId}`);
                     closeModal();
                     loadData(); // Reload data to show the new transaction
                 } else {
                     const error = await response.json();
-                    console.error('API Error:', error); // Debug log
                     alert(`Error creating transaction: ${error.error || 'Unknown error'}`);
                 }
             } catch (error) {
-                console.error('Error submitting transaction:', error);
                 alert('Error submitting transaction. Please try again.');
             }
         }

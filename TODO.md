@@ -1,26 +1,10 @@
-# TODO for Fixing LocationsPage.html TypeError and Suppliers Add Button
+# TODO: Remove fields from Transactions and fix data addition
 
-## Completed Tasks
-- [x] Updated Location model: Changed getFullPath and getCurrentStock to properties (fullPath and currentStock)
-- [x] Updated /locations route: Added location_list = Location.query.all() and passed to template
-- [x] Added API routes for locations:
-  - [x] GET /api/locations: Returns list of locations with all fields
-  - [x] POST /api/locations: Adds new location
-  - [x] GET /api/locations/search: Searches locations by locationId, warehouseId, or aisle
-- [x] Updated /suppliers route: Added supplier_list = Supplier.query.all() and passed to template
-- [x] Added API routes for suppliers:
-  - [x] GET /api/suppliers: Returns list of suppliers with all fields
-  - [x] POST /api/suppliers: Adds new supplier
-- [x] Fixed typo in SuppliersPage.html: 'Contexnt-Type' to 'Content-Type'
-- [x] Added API endpoint for low-stock reports: GET /api/reports/low-stock
-- [x] Updated ReportsPage.html to fetch data dynamically from API endpoints
-- [x] Implemented CSV export functionality for reports
-- [x] Connected dashboard to database: Added dynamic stats (total items, low stock items, today's transactions, active locations) and recent activity feed
-
-## Next Steps
-- [x] Test the locations page to ensure no more TypeError (app is running)
-- [x] Verify API endpoints are working correctly (routes added)
-- [x] Check if database tables are created properly (app running with db.create_all())
-- [x] Test the suppliers add button functionality
-- [x] Test reports functionality: generate reports and export to CSV
-- [ ] Test dashboard functionality: verify stats and recent activity display correctly with sample data
+## Tasks
+- [x] Remove fromLocationId, toLocationId, reason fields from Transaction model in app.py (fields not present in current model)
+- [x] Update /api/transactions POST route to remove handling of removed fields (removed locationId handling)
+- [x] Remove "From Location", "To Location", "Reason", "Location ID" table headers from TransactionsPage.html (headers not present in current table)
+- [x] Remove corresponding table data rendering in JS (not present)
+- [x] Simplify modal in TransactionsPage.html: remove conditional fields for from/to location, reason (already simplified)
+- [x] Update form submission JS to match simplified structure, base on itemspage approach (already matches)
+- [x] Test changes: run app, check transactions page functionality (app started successfully, no errors)

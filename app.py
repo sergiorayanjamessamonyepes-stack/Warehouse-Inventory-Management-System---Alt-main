@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, Response, jsonify, flash
 from functools import wraps
-
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, or_  # For aggregating and search filtering
 import pymysql
@@ -13,7 +12,7 @@ app.secret_key = 'your_secret_key_here'  # Set a unique and secret key for sessi
 ADMIN_CODE = "SECRET123"
 
 # App configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Dreakmaaram123@localhost/flask_app'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost/flask_app'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Recommended to avoid warnings
 
 db = SQLAlchemy(app)

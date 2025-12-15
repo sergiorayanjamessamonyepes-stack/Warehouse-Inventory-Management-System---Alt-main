@@ -5,6 +5,7 @@ from sqlalchemy import func, or_  # For aggregating and search filtering
 import pymysql
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date
+from abc import ABC, abstractmethod
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Set a unique and secret key for sessions
@@ -33,13 +34,88 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# Base Model class for inheritance and common functionality
+class BaseModel(db.Model):
+    __abstract__ = True
+
+    def save(self):
+        """Save the instance to the database."""
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        """Delete the instance from the database."""
+        db.session.delete(self)
+        db.session.commit()
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Get instance by ID."""
+        return cls.query.get(id)
+
+    @classmethod
+    def get_all(cls):
+        """Get all instances."""
+        return cls.query.all()
+
+    def to_dict(self):
+        """Convert model to dictionary (to be overridden by subclasses)."""
+        return {}
+
+# Abstract base class for inventory operations
+class InventoryOperation(ABC):
+    @abstractmethod
+    def execute(self):
+        """Execute the inventory operation."""
+        pass
+
+    @abstractmethod
+    def validate(self):
+        """Validate the operation before execution."""
+        pass
+
+    @abstractmethod
+    def get_report_data(self):
+        """Get data for reporting purposes."""
+        pass
+
 # New Supplier model (supplierId as string, auto-increments as SUP001, etc.)
-class Supplier(db.Model):
+class Supplier(BaseModel):
     __tablename__ = 'supplier'
     supplierId = db.Column(db.String(10), primary_key=True)  # String primary key
-    name = db.Column(db.String(120), nullable=False)
-    contact = db.Column(db.String(120), nullable=False)
-    address = db.Column(db.Text, nullable=False)
+    _name = db.Column(db.String(120), nullable=False)
+    _contact = db.Column(db.String(120), nullable=False)
+    _address = db.Column(db.Text, nullable=False)
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Name cannot be empty")
+        self._name = value.strip()
+
+    @property
+    def contact(self):
+        return self._contact
+
+    @contact.setter
+    def contact(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Contact cannot be empty")
+        self._contact = value.strip()
+
+    @property
+    def address(self):
+        return self._address
+
+    @address.setter
+    def address(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Address cannot be empty")
+        self._address = value.strip()
 
     @classmethod
     def get_next_id(cls):
@@ -56,10 +132,19 @@ class Supplier(db.Model):
         total = db.session.query(func.sum(Transaction.quantity)).filter(Transaction.supplierId == self.supplierId, Transaction.type == 'receive').scalar()
         return total or 0
 
+    def to_dict(self):
+        return {
+            'supplierId': self.supplierId,
+            'name': self.name,
+            'contact': self.contact,
+            'address': self.address,
+            'totalPurchases': self.get_total_purchases()
+        }
+
     def __repr__(self):
         return f'<Supplier {self.supplierId}>'
 
-# Updated Transaction model (simplified to one item per transaction, transId as primary key)
+# Base Transaction model with polymorphism
 class Transaction(db.Model):
     __tablename__ = 'transaction'
     transId = db.Column(db.String(20), primary_key=True)  # e.g., TXN001
@@ -70,6 +155,11 @@ class Transaction(db.Model):
     supplierId = db.Column(db.String(10), db.ForeignKey('supplier.supplierId'), nullable=True)  # For receive
     itemSku = db.Column(db.String(80), db.ForeignKey('items_list.sku'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'transaction'
+    }
 
     items_list = db.relationship('ItemsList', foreign_keys=[itemSku], backref='transactions')
 
@@ -82,18 +172,121 @@ class Transaction(db.Model):
             num = 1
         return f'TXN{num:03d}'
 
+    def apply_transaction(self, item):
+        """Abstract method to apply transaction effects on item stock. To be overridden by subclasses."""
+        raise NotImplementedError("Subclasses must implement apply_transaction method")
+
     def __repr__(self):
         return f'<Transaction {self.transId}>'
 
+# Receive Transaction subclass
+class ReceiveTransaction(Transaction):
+    __mapper_args__ = {
+        'polymorphic_identity': 'receive'
+    }
+
+    def apply_transaction(self, item):
+        """Increase stock for receive transactions."""
+        item.totalStock += self.quantity
+
+# Issue Transaction subclass
+class IssueTransaction(Transaction):
+    __mapper_args__ = {
+        'polymorphic_identity': 'issue'
+    }
+
+    def apply_transaction(self, item):
+        """Decrease stock for issue transactions."""
+        item.totalStock -= self.quantity
+
+# Transfer Transaction subclass
+class TransferTransaction(Transaction):
+    __mapper_args__ = {
+        'polymorphic_identity': 'transfer'
+    }
+
+    def apply_transaction(self, item):
+        """Decrease stock for transfer transactions (assuming transfer out)."""
+        item.totalStock -= self.quantity
+
+# Adjustment Transaction subclass
+class AdjustmentTransaction(Transaction):
+    __mapper_args__ = {
+        'polymorphic_identity': 'adjustment'
+    }
+
+    def apply_transaction(self, item):
+        """Adjust stock for adjustment transactions (could be positive or negative)."""
+        # For adjustments, quantity can be positive (add) or negative (subtract)
+        item.totalStock += self.quantity
+
 # Model definition (supplierId as string)
-class ItemsList(db.Model):
+class ItemsList(BaseModel):
     sku = db.Column(db.String(80), primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    unit = db.Column(db.String(50), nullable=False)
-    reorderPoint = db.Column(db.Integer, nullable=False)
-    supplierId = db.Column(db.String(10), nullable=False)  # String to match Supplier
-    totalStock = db.Column(db.Integer, nullable=False, default=0)  # Added for Total Stock
+    _name = db.Column(db.String(120), nullable=False)
+    _description = db.Column(db.Text, nullable=True)
+    _unit = db.Column(db.String(50), nullable=False)
+    _reorderPoint = db.Column(db.Integer, nullable=False)
+    _supplierId = db.Column(db.String(10), nullable=False)  # String to match Supplier
+    _totalStock = db.Column(db.Integer, nullable=False, default=0)  # Added for Total Stock
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Name cannot be empty")
+        self._name = value.strip()
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, value):
+        self._description = value.strip() if value else None
+
+    @property
+    def unit(self):
+        return self._unit
+
+    @unit.setter
+    def unit(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Unit cannot be empty")
+        self._unit = value.strip()
+
+    @property
+    def reorderPoint(self):
+        return self._reorderPoint
+
+    @reorderPoint.setter
+    def reorderPoint(self, value):
+        if value < 0:
+            raise ValueError("Reorder point cannot be negative")
+        self._reorderPoint = value
+
+    @property
+    def supplierId(self):
+        return self._supplierId
+
+    @supplierId.setter
+    def supplierId(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Supplier ID cannot be empty")
+        self._supplierId = value.strip()
+
+    @property
+    def totalStock(self):
+        return self._totalStock
+
+    @totalStock.setter
+    def totalStock(self, value):
+        if value < 0:
+            raise ValueError("Total stock cannot be negative")
+        self._totalStock = value
 
     @classmethod
     def get_next_sku(cls):
@@ -105,17 +298,69 @@ class ItemsList(db.Model):
             num = 1
         return f'SKU{num:03d}'
 
+    def to_dict(self):
+        return {
+            'sku': self.sku,
+            'name': self.name,
+            'description': self.description,
+            'unit': self.unit,
+            'totalStock': self.totalStock,
+            'reorderPoint': self.reorderPoint,
+            'supplierId': self.supplierId,
+            'status': 'In Stock' if self.totalStock > self.reorderPoint else 'Low Stock'
+        }
+
     def __repr__(self):
         return f'<SKU {self.sku}>'
 
 # New User model (userId as string, auto-increments as USER001, etc.)
-class User(db.Model):
+class User(BaseModel):
     __tablename__ = 'users'
     userId = db.Column(db.String(10), primary_key=True)  # String primary key
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    fullName = db.Column(db.String(120), nullable=False)
-    password = db.Column(db.String(255), nullable=False)  # Hashed password
-    role = db.Column(db.String(50), nullable=False)  # e.g., 'admin' or 'staff'
+    _username = db.Column(db.String(80), unique=True, nullable=False)
+    _fullName = db.Column(db.String(120), nullable=False)
+    _password = db.Column(db.String(255), nullable=False)  # Hashed password
+    _role = db.Column(db.String(50), nullable=False)  # e.g., 'admin' or 'staff'
+
+    @property
+    def username(self):
+        return self._username
+
+    @username.setter
+    def username(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Username cannot be empty")
+        self._username = value.strip()
+
+    @property
+    def fullName(self):
+        return self._fullName
+
+    @fullName.setter
+    def fullName(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Full name cannot be empty")
+        self._fullName = value.strip()
+
+    @property
+    def password(self):
+        return self._password
+
+    @password.setter
+    def password(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Password cannot be empty")
+        self._password = value.strip()
+
+    @property
+    def role(self):
+        return self._role
+
+    @role.setter
+    def role(self, value):
+        if value not in ['admin', 'staff']:
+            raise ValueError("Role must be 'admin' or 'staff'")
+        self._role = value
 
     @classmethod
     def get_next_id(cls):
@@ -127,18 +372,76 @@ class User(db.Model):
             num = 1
         return f'USER{num:03d}'
 
+    def to_dict(self):
+        return {
+            'userId': self.userId,
+            'username': self.username,
+            'fullName': self.fullName,
+            'role': self.role.upper()
+        }
+
     def __repr__(self):
         return f'<User {self.userId}>'
 
 # New Location model
-class Location(db.Model):
+class Location(BaseModel):
     __tablename__ = 'location'
     locationId = db.Column(db.String(10), primary_key=True)
-    warehouseId = db.Column(db.String(10), nullable=False)
-    aisle = db.Column(db.String(10), nullable=False)
-    rack = db.Column(db.String(10), nullable=False)
-    shelf = db.Column(db.String(10), nullable=False)
-    capacity = db.Column(db.Integer, nullable=False)
+    _warehouseId = db.Column(db.String(10), nullable=False)
+    _aisle = db.Column(db.String(10), nullable=False)
+    _rack = db.Column(db.String(10), nullable=False)
+    _shelf = db.Column(db.String(10), nullable=False)
+    _capacity = db.Column(db.Integer, nullable=False)
+
+    @property
+    def warehouseId(self):
+        return self._warehouseId
+
+    @warehouseId.setter
+    def warehouseId(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Warehouse ID cannot be empty")
+        self._warehouseId = value.strip()
+
+    @property
+    def aisle(self):
+        return self._aisle
+
+    @aisle.setter
+    def aisle(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Aisle cannot be empty")
+        self._aisle = value.strip()
+
+    @property
+    def rack(self):
+        return self._rack
+
+    @rack.setter
+    def rack(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Rack cannot be empty")
+        self._rack = value.strip()
+
+    @property
+    def shelf(self):
+        return self._shelf
+
+    @shelf.setter
+    def shelf(self, value):
+        if not value or len(value.strip()) == 0:
+            raise ValueError("Shelf cannot be empty")
+        self._shelf = value.strip()
+
+    @property
+    def capacity(self):
+        return self._capacity
+
+    @capacity.setter
+    def capacity(self, value):
+        if value <= 0:
+            raise ValueError("Capacity must be positive")
+        self._capacity = value
 
     @classmethod
     def get_next_id(cls):
@@ -153,6 +456,17 @@ class Location(db.Model):
     @property
     def fullPath(self):
         return f"{self.warehouseId}-{self.aisle}-{self.rack}-{self.shelf}"
+
+    def to_dict(self):
+        return {
+            'locationId': self.locationId,
+            'warehouseId': self.warehouseId,
+            'aisle': self.aisle,
+            'rack': self.rack,
+            'shelf': self.shelf,
+            'fullPath': self.fullPath,
+            'capacity': self.capacity
+        }
 
     def __repr__(self):
         return f'<Location {self.locationId}>'
@@ -599,22 +913,45 @@ def add_transaction():
     # Fetch the item to update stock
     item = ItemsList.query.get_or_404(data['itemSku'])
 
-    new_trans = Transaction(
-        transId=Transaction.get_next_trans_id(),
-        type=trans_type,
-        userId=user_id,
-        notes=data.get('notes'),
-        itemSku=data['itemSku'],
-        quantity=data['quantity']
-    )
-
+    # Instantiate the appropriate transaction subclass based on type
     if trans_type == 'receive':
-        new_trans.supplierId = data.get('supplierId')
-        # Add to stock for receive
-        item.totalStock += data['quantity']
+        new_trans = ReceiveTransaction(
+            transId=Transaction.get_next_trans_id(),
+            userId=user_id,
+            notes=data.get('notes'),
+            itemSku=data['itemSku'],
+            quantity=data['quantity'],
+            supplierId=data.get('supplierId')
+        )
+    elif trans_type == 'issue':
+        new_trans = IssueTransaction(
+            transId=Transaction.get_next_trans_id(),
+            userId=user_id,
+            notes=data.get('notes'),
+            itemSku=data['itemSku'],
+            quantity=data['quantity']
+        )
+    elif trans_type == 'transfer':
+        new_trans = TransferTransaction(
+            transId=Transaction.get_next_trans_id(),
+            userId=user_id,
+            notes=data.get('notes'),
+            itemSku=data['itemSku'],
+            quantity=data['quantity']
+        )
+    elif trans_type == 'adjustment':
+        new_trans = AdjustmentTransaction(
+            transId=Transaction.get_next_trans_id(),
+            userId=user_id,
+            notes=data.get('notes'),
+            itemSku=data['itemSku'],
+            quantity=data['quantity']
+        )
     else:
-        # Subtract from stock for issue, transfer, adjustment
-        item.totalStock -= data['quantity']
+        return jsonify({'error': 'Invalid transaction type'}), 400
+
+    # Apply the transaction polymorphically
+    new_trans.apply_transaction(item)
 
     db.session.add(new_trans)
     db.session.commit()

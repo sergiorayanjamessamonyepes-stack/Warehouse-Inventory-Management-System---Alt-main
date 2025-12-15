@@ -334,16 +334,18 @@
                             </button>
                         </div>
 
-                        <table class="min-w-full divide-y divide-gray-200 mt-4 table">
-                            <thead id="reportHead" class="bg-gray-50">
-                                <tr>
-                                    <!-- Dynamic columns will be inserted here -->
-                                </tr>
-                            </thead>
-                            <tbody id="reportBody" class="bg-white divide-y divide-gray-200">
-                                <!-- Dynamic data will be inserted here -->
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 mt-4 table">
+                                <thead id="reportHead" class="bg-gray-50">
+                                    <tr>
+                                        <!-- Dynamic columns will be inserted here -->
+                                    </tr>
+                                </thead>
+                                <tbody id="reportBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Dynamic data will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <div class="bg-white rounded-lg shadow p-6">
@@ -444,7 +446,7 @@
                 columns = ['SKU', 'Name', 'Total Stock', 'Reorder Point', 'Supplier ID', 'Status'];
             } else if (type === 'transactions') {
                 url = '/api/transactions';
-                columns = ['Transaction ID', 'Type', 'Date', 'User ID', 'Item SKU', 'Quantity', 'Notes', 'Supplier ID', 'Location ID'];
+                columns = ['Transaction ID', 'Type', 'Date', 'User ID', 'Item SKU', 'Quantity', 'Notes', 'Supplier ID'];
             } else if (type === 'low-stock') {
                 url = '/api/reports/low-stock';
                 columns = ['SKU', 'Name', 'Total Stock', 'Reorder Point', 'Supplier ID', 'Status'];
@@ -519,7 +521,7 @@
             if (type === 'inventory') {
                 columns = ['sku', 'name', 'totalStock', 'reorderPoint', 'supplierId', 'status'];
             } else if (type === 'transactions') {
-                columns = ['transId', 'type', 'date', 'userId', 'itemSku', 'quantity', 'notes', 'supplierId', 'locationId'];
+                columns = ['transId', 'type', 'date', 'userId', 'itemSku', 'quantity', 'notes', 'supplierId'];
             } else if (type === 'low-stock') {
                 columns = ['sku', 'name', 'totalStock', 'reorderPoint', 'supplierId', 'status'];
             }

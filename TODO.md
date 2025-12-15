@@ -1,26 +1,19 @@
-# TODO for Fixing LocationsPage.html TypeError and Suppliers Add Button
+# Remove From Location, To Location, and Reason Fields
 
-## Completed Tasks
-- [x] Updated Location model: Changed getFullPath and getCurrentStock to properties (fullPath and currentStock)
-- [x] Updated /locations route: Added location_list = Location.query.all() and passed to template
-- [x] Added API routes for locations:
-  - [x] GET /api/locations: Returns list of locations with all fields
-  - [x] POST /api/locations: Adds new location
-  - [x] GET /api/locations/search: Searches locations by locationId, warehouseId, or aisle
-- [x] Updated /suppliers route: Added supplier_list = Supplier.query.all() and passed to template
-- [x] Added API routes for suppliers:
-  - [x] GET /api/suppliers: Returns list of suppliers with all fields
-  - [x] POST /api/suppliers: Adds new supplier
-- [x] Fixed typo in SuppliersPage.html: 'Contexnt-Type' to 'Content-Type'
-- [x] Added API endpoint for low-stock reports: GET /api/reports/low-stock
-- [x] Updated ReportsPage.html to fetch data dynamically from API endpoints
-- [x] Implemented CSV export functionality for reports
-- [x] Connected dashboard to database: Added dynamic stats (total items, low stock items, today's transactions, active locations) and recent activity feed
+## Backend Changes (app.py)
+- [ ] Remove fromLocationId, toLocationId, and reason fields from Transaction model
+- [ ] Update /api/transactions GET endpoint to exclude these fields
+- [ ] Update /api/transactions POST endpoint to not handle these fields
+- [ ] Remove logic for transfer and adjustment types that use these fields
 
-## Next Steps
-- [x] Test the locations page to ensure no more TypeError (app is running)
-- [x] Verify API endpoints are working correctly (routes added)
-- [x] Check if database tables are created properly (app running with db.create_all())
-- [x] Test the suppliers add button functionality
-- [x] Test reports functionality: generate reports and export to CSV
-- [ ] Test dashboard functionality: verify stats and recent activity display correctly with sample data
+## Frontend Changes (TransactionsPage.html)
+- [ ] Remove table headers for From Location, To Location, and Reason
+- [ ] Update table row rendering to exclude these columns
+- [ ] Remove form fields for From Location, To Location, and Reason in modal
+- [ ] Update form submission logic to not include these fields
+- [ ] Adjust transaction type options if needed
+
+## Testing
+- [ ] Test transaction creation for remaining types (receive, issue)
+- [ ] Verify table displays correctly
+- [ ] Check API responses

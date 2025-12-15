@@ -68,12 +68,8 @@ class Transaction(db.Model):
     userId = db.Column(db.String(10), db.ForeignKey('users.userId'), nullable=False)
     notes = db.Column(db.Text, nullable=True)
     supplierId = db.Column(db.String(10), db.ForeignKey('supplier.supplierId'), nullable=True)  # For receive
-    fromLocationId = db.Column(db.String(10), nullable=True)  # For transfer
-    toLocationId = db.Column(db.String(10), nullable=True)  # For transfer
-    reason = db.Column(db.String(255), nullable=True)  # For adjustment
     itemSku = db.Column(db.String(80), db.ForeignKey('items_list.sku'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    locationId = db.Column(db.String(10), nullable=False)  # Location where transaction occurred
 
     items_list = db.relationship('ItemsList', foreign_keys=[itemSku], backref='transactions')
 
@@ -160,10 +156,8 @@ class Location(db.Model):
 
     @property
     def currentStock(self):
-        # Calculate current stock from transactions (sum of quantities for receive minus issue at this location)
-        receive = db.session.query(func.sum(Transaction.quantity)).filter(Transaction.locationId == self.locationId, Transaction.type == 'receive').scalar() or 0
-        issue = db.session.query(func.sum(Transaction.quantity)).filter(Transaction.locationId == self.locationId, Transaction.type == 'issue').scalar() or 0
-        return receive - issue
+        # Since transactions no longer track locations, return 0 or a placeholder
+        return 0
 
     def __repr__(self):
         return f'<Location {self.locationId}>'
@@ -313,7 +307,7 @@ def locations():
 def transactions():
     if 'first_name' not in session:
         return redirect(url_for('login'))
-    return render_template('TransactionsPage.html', first_name=session['first_name'], role=session['role'])
+    return render_template('TransactionsPage.html', first_name=session['first_name'], role=session['role'], userId=session['userId'])
 
 @app.route('/suppliers')
 def suppliers():
@@ -590,8 +584,7 @@ def get_transactions():
         'itemSku': trans.itemSku,
         'quantity': trans.quantity,
         'notes': trans.notes,
-        'supplierId': trans.supplierId,
-        'locationId': trans.locationId
+        'supplierId': trans.supplierId
     } for trans in transactions])
 
 @app.route('/api/transactions', methods=['POST'])
@@ -613,9 +606,6 @@ def add_transaction():
 
     if trans_type == 'receive':
         new_trans.supplierId = data.get('supplierId')
-        new_trans.locationId = data['locationId']
-    elif trans_type == 'issue':
-        new_trans.locationId = data['locationId']
 
     db.session.add(new_trans)
     db.session.commit()

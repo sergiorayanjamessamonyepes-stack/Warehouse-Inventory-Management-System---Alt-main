@@ -198,7 +198,7 @@ def signup():
         session['role'] = role
 
         # Redirect based on role
-        return redirect(url_for('admin_dashboard' if role == 'admin' else 'home'))
+        return redirect(url_for('dashboard'))
 
     return render_template('SignUpPage.html')
 
@@ -215,7 +215,7 @@ def login():
             session['first_name'] = user.fullName.split()[0]  # Assuming first name is first part
             session['role'] = user.role
             session['userId'] = user.userId
-            return redirect(url_for('home'))
+            return redirect(url_for('dashboard'))
         else:
             flash('Invalid email or password.', 'error')
             return redirect(url_for('login'))

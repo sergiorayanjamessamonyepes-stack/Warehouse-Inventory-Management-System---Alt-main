@@ -220,6 +220,7 @@
             padding: 0.75rem;
             text-align: left;
             border-bottom: 1px solid #e5e7eb;
+            color: #374151;
         }
 
         .table th {
@@ -227,6 +228,7 @@
             font-weight: 500;
             font-size: small;
             text-transform: uppercase;
+            color: #111827;
         }
 
         .badge {
@@ -550,99 +552,97 @@
 
         <!-- Page content -->
         <main class="p-6">
-            <div class="container">
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h1 class="text-2xl font-bold text-gray-900">Suppliers</h1>
-                            <p class="text-gray-600 mt-1">Manage supplier information</p>
-                        </div>
-                        <div class="edit-only">
-                            <button class="btn btn-primary" onclick="openModal()">
-                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Suppliers</h1>
+                        <p class="text-gray-600 mt-1">Manage supplier information</p>
+                    </div>
+                    <div class="edit-only">
+                        <button class="btn btn-primary" onclick="openModal()">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Add Supplier
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="mb-4">
+                        <!-- SearchBar Component -->
+                        <div class="search-bar-container">
+                            <div class="search-icon-wrapper">
+                                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4"></path>
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>
-                                Add Supplier
+                            </div>
+                            <input type="text" class="search-input" id="search-input"
+                                placeholder="Search suppliers..." />
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Supplier ID</th>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Address</th>
+                                <th>Total Purchases</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suppliers-table">
+                            {% if supplier_list %}
+                            {% for supplier in supplier_list %}
+                            <tr>
+                                <td>{{ supplier.supplierId }}</td>
+                                <td>{{ supplier.name }}</td>
+                                <td>{{ supplier.contact }}</td>
+                                <td>{{ supplier.address }}</td>
+                                <td>${{ supplier.get_total_purchases() }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="modal-overlay" class="modal-overlay">
+                    <div class="modal-backdrop"></div>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title">Add New Supplier</h2>
+                            <button class="modal-close-btn" id="modal-close-btn">
+                                <svg class="close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
                             </button>
                         </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="mb-4">
-                            <!-- SearchBar Component -->
-                            <div class="search-bar-container">
-                                <div class="search-icon-wrapper">
-                                    <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                    </svg>
+                        <div class="modal-body">
+                            <div class="space-y-4">
+                                <div class="input-group">
+                                    <label class="input-label">Name</label>
+                                    <input type="text" class="input" id="name" placeholder="e.g., ABC Supplies Co."
+                                        required>
                                 </div>
-                                <input type="text" class="search-input" id="search-input"
-                                    placeholder="Search suppliers..." />
+                                <div class="input-group">
+                                    <label class="input-label">Contact</label>
+                                    <input type="email" class="input" id="contact"
+                                        placeholder="e.g., contact@supplier.com" required>
+                                </div>
+                                <div class="input-group">
+                                    <label class="input-label">Address</label>
+                                    <input type="text" class="input" id="address" placeholder="e.g., 123 Supply Street"
+                                        required>
+                                </div>
                             </div>
                         </div>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Supplier ID</th>
-                                    <th>Name</th>
-                                    <th>Contact</th>
-                                    <th>Address</th>
-                                    <th>Total Purchases</th>
-                                </tr>
-                            </thead>
-                            <tbody id="suppliers-table">
-                                {% if supplier_list %}
-                                {% for supplier in supplier_list %}
-                                <tr>
-                                    <td>{{ supplier.supplierId }}</td>
-                                    <td>{{ supplier.name }}</td>
-                                    <td>{{ supplier.contact }}</td>
-                                    <td>{{ supplier.address }}</td>
-                                    <td>${{ supplier.get_total_purchases() }}</td>
-                                </tr>
-                                {% endfor %}
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div id="modal-overlay" class="modal-overlay">
-                        <div class="modal-backdrop"></div>
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h2 class="modal-title">Add New Supplier</h2>
-                                <button class="modal-close-btn" id="modal-close-btn">
-                                    <svg class="close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="space-y-4">
-                                    <div class="input-group">
-                                        <label class="input-label">Name</label>
-                                        <input type="text" class="input" id="name" placeholder="e.g., ABC Supplies Co."
-                                            required>
-                                    </div>
-                                    <div class="input-group">
-                                        <label class="input-label">Contact</label>
-                                        <input type="email" class="input" id="contact"
-                                            placeholder="e.g., contact@supplier.com" required>
-                                    </div>
-                                    <div class="input-group">
-                                        <label class="input-label">Address</label>
-                                        <input type="text" class="input" id="address"
-                                            placeholder="e.g., 123 Supply Street" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button class="btn btn-secondary" id="cancel-btn">Cancel</button>
-                                <button class="btn btn-primary" id="submit-btn">Create</button>
-                            </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                            <button class="btn btn-primary" id="submit-btn">Create</button>
                         </div>
                     </div>
                 </div>
@@ -700,14 +700,14 @@
         // Navigation logic using window.location.href
         const navBtns = document.querySelectorAll('.nav-btn');
         navBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const page = this.getAttribute('data-page');
                 window.location.href = page;
             });
         });
 
         // Set active state based on current path
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const currentPath = window.location.pathname;
             navBtns.forEach(btn => {
                 if (btn.getAttribute('data-page') === currentPath) {

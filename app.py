@@ -515,6 +515,22 @@ def search_users():
         'role': user.role.upper()
     } for user in users])
 
+@app.route('/api/suppliers/search', methods=['GET'])
+def search_suppliers():
+    if 'first_name' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    query = request.args.get('q', '')
+    suppliers = Supplier.query.filter(
+        or_(Supplier.name.contains(query), Supplier.supplierId.contains(query))
+    ).all()
+    return jsonify([{
+        'supplierId': supplier.supplierId,
+        'name': supplier.name,
+        'contact': supplier.contact,
+        'address': supplier.address,
+        'totalPurchases': supplier.get_total_purchases()
+    } for supplier in suppliers])
+
 @app.route('/api/transactions', methods=['GET'])
 def get_transactions():
     if 'first_name' not in session:

@@ -35,65 +35,208 @@
             }
         }
 
-        /* Modal styles */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 50;
-            overflow-y: auto;
-            display: none;
-            /* Hidden by default */
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 1rem;
-        }
+/* =========================
+   MODAL OVERLAY
+========================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
 
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(107, 114, 128, 0.75);
-            transition: opacity 0.3s;
-        }
+    display: none; /* hidden by default */
+    align-items: center;
+    justify-content: center;
 
-        .modal-content {
-            background-color: white;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transform: scale(1);
-            transition: transform 0.3s;
-            max-width: 28rem;
-            width: 100%;
-            margin: 2rem 0;
-        }
+    padding: 1rem;
+    overflow-y: auto;
+}
 
-        .modal-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            padding: 1.25rem;
-        }
+/* Show modal */
+.modal-overlay.active {
+    display: flex;
+}
 
-        .modal-title {
-            font-size: 1.125rem;
-            font-weight: 500;
-            color: #111827;
-        }
+/* =========================
+   BACKDROP
+========================= */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(107, 114, 128, 0.75);
+    z-index: 0;
+}
 
-        .modal-close-btn {
-            color: #9ca3af;
-            background: none;
-            border: none;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
+/* =========================
+   MODAL CONTENT
+========================= */
+.modal-content {
+    position: relative;
+    z-index: 1;
 
-        .modal-close-btn:hover {
-            color: #6b7280;
-        }
+    width: 100%;
+    max-width: 32rem;
+    margin: auto;
 
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    overflow: hidden;
+
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    transform: scale(1);
+    transition: transform 0.3s ease;
+}
+
+/* =========================
+   MODAL OVERLAY
+========================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+
+    display: none; /* hidden by default */
+    align-items: center;
+    justify-content: center;
+
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+/* Show modal */
+.modal-overlay.active {
+    display: flex;
+}
+
+/* =========================
+   BACKDROP
+========================= */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(107, 114, 128, 0.75);
+    z-index: 0;
+}
+
+/* =========================
+   MODAL CONTENT
+========================= */
+.modal-content {
+    position: relative;
+    z-index: 1;
+
+    width: 100%;
+    max-width: 32rem;
+    margin: auto;
+
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    overflow: hidden;
+
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    transform: scale(1);
+    transition: transform 0.3s ease;
+}
+
+/* =========================
+   HEADER
+========================= */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* =========================
+   CLOSE BUTTON
+========================= */
+.modal-close-btn {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+
+    color: #9ca3af;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    color: #6b7280;
+}
+
+.close-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* =========================
+   BODY
+========================= */
+.modal-body {
+    padding: 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+/* =========================
+   FOOTER
+========================= */
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* =========================
+   OPTIONAL FORM HELPERS
+========================= */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.input-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #111827;
+}
+
+.input,
+.select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+
+    font-size: 0.875rem;
+}
+
+.input:focus,
+.select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 1px #6366f1;
+}
         .close-icon {
             height: 1.5rem;
             width: 1.5rem;
@@ -571,8 +714,7 @@
                                     <div class="input-group">
                                         <label class="input-label">Supplier</label>
                                         <select class="select" id="supplierId">
-                                            <option value="1">Supplier 1</option>
-                                            <option value="2">Supplier 2</option>
+                                            <!-- Options populated by JS -->
                                         </select>
                                     </div>
                                 </div>
@@ -693,23 +835,40 @@
             });
         }
 
-        function openModal(itemSku = null) {
+        async function openModal(itemSku = null) {
             currentItemSku = itemSku;
+            // Fetch suppliers and populate select
+            try {
+                const supplierResponse = await fetch('/api/suppliers');
+                const suppliers = await supplierResponse.json();
+                const supplierSelect = document.getElementById('supplierId');
+                supplierSelect.innerHTML = '';
+                suppliers.forEach(sup => {
+                    const option = document.createElement('option');
+                    option.value = sup.supplierId;
+                    option.textContent = sup.name;
+                    supplierSelect.appendChild(option);
+                });
+            } catch (error) {
+                alert('Error loading suppliers: ' + error.message);
+            }
+
             if (itemSku) {
                 // Edit mode: Fetch item data and populate form
-                fetch(`/api/items/${itemSku}`)
-                    .then(response => response.json())
-                    .then(item => {
-                        document.getElementById('name').value = item.name;
-                        document.getElementById('description').value = item.description || '';
-                        document.getElementById('unit').value = item.unit;
-                        document.getElementById('totalStock').value = item.totalStock;
-                        document.getElementById('reorderPoint').value = item.reorderPoint;
-                        document.getElementById('supplierId').value = item.supplierId;
-                        modalTitle.textContent = 'Edit Item';
-                        submitBtn.textContent = 'Update';
-                    })
-                    .catch(error => alert('Error loading item: ' + error.message));
+                try {
+                    const response = await fetch(`/api/items/${itemSku}`);
+                    const item = await response.json();
+                    document.getElementById('name').value = item.name;
+                    document.getElementById('description').value = item.description || '';
+                    document.getElementById('unit').value = item.unit;
+                    document.getElementById('totalStock').value = item.totalStock;
+                    document.getElementById('reorderPoint').value = item.reorderPoint;
+                    document.getElementById('supplierId').value = item.supplierId;
+                    modalTitle.textContent = 'Edit Item';
+                    submitBtn.textContent = 'Update';
+                } catch (error) {
+                    alert('Error loading item: ' + error.message);
+                }
             } else {
                 // Add mode: Clear form
                 document.getElementById('name').value = '';
@@ -717,7 +876,11 @@
                 document.getElementById('unit').value = 'Unit';
                 document.getElementById('totalStock').value = '0';
                 document.getElementById('reorderPoint').value = '10';
-                document.getElementById('supplierId').value = '1';
+                // Set default supplier to first one if available
+                const supplierSelect = document.getElementById('supplierId');
+                if (supplierSelect.options.length > 0) {
+                    supplierSelect.value = supplierSelect.options[0].value;
+                }
                 modalTitle.textContent = 'Add New Item';
                 submitBtn.textContent = 'Create';
             }
@@ -741,7 +904,7 @@
                 unit: document.getElementById('unit').value,
                 totalStock: parseInt(document.getElementById('totalStock').value),
                 reorderPoint: parseInt(document.getElementById('reorderPoint').value),
-                supplierId: parseInt(document.getElementById('supplierId').value)
+                supplierId: document.getElementById('supplierId').value
             };
             try {
                 let response;

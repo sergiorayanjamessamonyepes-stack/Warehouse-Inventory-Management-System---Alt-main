@@ -8,3 +8,4 @@
 - [x] Simplify modal in TransactionsPage.html: remove conditional fields for from/to location, reason (already simplified)
 - [x] Update form submission JS to match simplified structure, base on itemspage approach (already matches)
 - [x] Test changes: run app, check transactions page functionality (app started successfully, no errors)
+- [x] Make the "new transaction button" functional: fix modal structure and JavaScript to properly open/close modal

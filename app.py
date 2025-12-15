@@ -154,11 +154,6 @@ class Location(db.Model):
     def fullPath(self):
         return f"{self.warehouseId}-{self.aisle}-{self.rack}-{self.shelf}"
 
-    @property
-    def currentStock(self):
-        # Since transactions no longer track locations, return 0 or a placeholder
-        return 0
-
     def __repr__(self):
         return f'<Location {self.locationId}>'
 @app.route('/')
@@ -298,8 +293,7 @@ def locations():
         'rack': location.rack,
         'shelf': location.shelf,
         'fullPath': location.fullPath,
-        'capacity': location.capacity,
-        'currentStock': location.currentStock
+        'capacity': location.capacity
     } for location in locations]
     return render_template('LocationsPage.html', location_list=location_list, first_name=session['first_name'], role=session['role'])
 
@@ -418,8 +412,7 @@ def get_locations():
         'rack': location.rack,
         'shelf': location.shelf,
         'fullPath': location.fullPath,
-        'capacity': location.capacity,
-        'currentStock': location.currentStock
+        'capacity': location.capacity
     } for location in locations])
 
 @app.route('/api/locations', methods=['POST'])
@@ -452,8 +445,7 @@ def search_locations():
         'rack': location.rack,
         'shelf': location.shelf,
         'fullPath': location.fullPath,
-        'capacity': location.capacity,
-        'currentStock': location.currentStock
+        'capacity': location.capacity
     } for location in locations])
 
 @app.route('/api/suppliers', methods=['GET'])
@@ -595,6 +587,9 @@ def add_transaction():
     trans_type = data['type']
     user_id = data['userId']  # Assuming from session or data
 
+    # Fetch the item to update stock
+    item = ItemsList.query.get_or_404(data['itemSku'])
+
     new_trans = Transaction(
         transId=Transaction.get_next_trans_id(),
         type=trans_type,
@@ -606,6 +601,11 @@ def add_transaction():
 
     if trans_type == 'receive':
         new_trans.supplierId = data.get('supplierId')
+        # Add to stock for receive
+        item.totalStock += data['quantity']
+    else:
+        # Subtract from stock for issue, transfer, adjustment
+        item.totalStock -= data['quantity']
 
     db.session.add(new_trans)
     db.session.commit()

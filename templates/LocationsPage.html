@@ -94,6 +94,7 @@
             padding: 0.75rem;
             text-align: left;
             border-bottom: 1px solid #e5e7eb;
+            color: #374151;
         }
 
         th {
@@ -101,6 +102,7 @@
             font-weight: 500;
             font-size: small;
             text-transform: uppercase;
+            color: #111827;
         }
 
         /* SearchBar styles */
@@ -142,59 +144,89 @@
             box-shadow: 0 0 0 2px #3b82f6;
         }
 
-        /* Modal styles */
+        /* =========================
+           MODAL OVERLAY
+        ========================= */
         .modal-overlay {
             position: fixed;
             inset: 0;
             z-index: 50;
-            overflow-y: auto;
-            display: none;
-            /* Hidden by default */
+
+            display: none; /* hidden by default */
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+
             padding: 1rem;
+            overflow-y: auto;
         }
 
+        /* Show modal */
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        /* =========================
+           BACKDROP
+        ========================= */
         .modal-backdrop {
             position: fixed;
             inset: 0;
             background-color: rgba(107, 114, 128, 0.75);
-            transition: opacity 0.3s;
+            z-index: 0;
         }
 
+        /* =========================
+           MODAL CONTENT
+        ========================= */
         .modal-content {
-            background-color: white;
+            position: relative;
+            z-index: 1;
+
+            width: 100%;
+            max-width: 32rem;
+            margin: auto;
+
+            background-color: #ffffff;
             border-radius: 0.5rem;
             overflow: hidden;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+            box-shadow:
+                0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
             transform: scale(1);
-            transition: transform 0.3s;
-            max-width: 28rem;
-            width: 100%;
-            margin: 2rem 0;
+            transition: transform 0.3s ease;
         }
 
+        /* =========================
+           HEADER
+        ========================= */
         .modal-header {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
-            margin-bottom: 1rem;
-            padding: 1.25rem;
+
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .modal-title {
-            font-size: 1.125rem;
-            font-weight: 500;
+            font-size: 1.25rem;
+            font-weight: 600;
             color: #111827;
         }
 
+        /* =========================
+           CLOSE BUTTON
+        ========================= */
         .modal-close-btn {
-            color: #9ca3af;
             background: none;
             border: none;
+            padding: 0.25rem;
+
+            color: #9ca3af;
             cursor: pointer;
-            transition: color 0.2s;
+            transition: color 0.2s ease;
         }
 
         .modal-close-btn:hover {
@@ -202,20 +234,29 @@
         }
 
         .close-icon {
-            height: 1.5rem;
-            width: 1.5rem;
+            width: 1.25rem;
+            height: 1.25rem;
         }
 
+        /* =========================
+           BODY
+        ========================= */
         .modal-body {
-            padding: 0 1.25rem 1.25rem;
+            padding: 1rem;
+            max-height: 60vh;
+            overflow-y: auto;
         }
 
+        /* =========================
+           FOOTER
+        ========================= */
         .modal-footer {
-            background-color: #f9fafb;
-            padding: 0.75rem 1rem;
             display: flex;
-            flex-direction: row-reverse;
+            justify-content: flex-end;
             gap: 0.5rem;
+
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
         }
 
         /* Input styles */
@@ -252,7 +293,7 @@
         .input[required],
         .select[required],
         .textarea[required] {
-            border-color: #ef4444;
+            border-color: #d1d5db;
         }
 
         .textarea {
@@ -265,36 +306,37 @@
             display: none;
         }
 
-        /* Button styles */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 
-        .btn-primary {
-            background-color: #3b82f6;
-            color: white;
-        }
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
 
-        .btn-primary:hover {
-            background-color: #2563eb;
-        }
+    font-size: 0.875rem;
+    font-weight: 500;
 
-        .btn-secondary {
-            background-color: #e5e7eb;
-            color: #374151;
-        }
+    cursor: pointer;
+    border: none;
 
-        .btn-secondary:hover {
-            background-color: #d1d5db;
-        }
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary {
+    background-color: #2563eb; /* blue-600 */
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:hover {
+    background-color: #1d4ed8; /* blue-700 */
+}
+
+.btn-primary svg {
+    width: 1rem;
+    height: 1rem;
+}
     </style>
 </head>
 
@@ -471,11 +513,11 @@
                         <h1 class="text-2xl font-bold text-gray-900">Locations</h1>
                         <p class="text-gray-600 mt-1">Manage warehouse locations</p>
                     </div>
-                    <button id="addLocationBtn" class="bg-blue-500 text-white px-4 py-2 rounded flex items-center">
+                    <button class="btn btn-primary" onclick="openModal()">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
-                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
                         Add Location
                     </button>
@@ -542,34 +584,36 @@
                                 </svg>
                             </button>
                         </div>
-                        <div class="modal-body">
-                            <div class="space-y-4">
-                                <div class="input-group">
-                                    <label class="input-label">Warehouse ID</label>
-                                    <input type="text" class="input" id="warehouseId" value="WH01" required>
-                                </div>
-                                <div class="input-group">
-                                    <label class="input-label">Aisle</label>
-                                    <input type="text" class="input" id="aisle" placeholder="e.g., A" required>
-                                </div>
-                                <div class="input-group">
-                                    <label class="input-label">Rack</label>
-                                    <input type="text" class="input" id="rack" placeholder="e.g., 1" required>
-                                </div>
-                                <div class="input-group">
-                                    <label class="input-label">Shelf</label>
-                                    <input type="text" class="input" id="shelf" placeholder="e.g., 1" required>
-                                </div>
-                                <div class="input-group">
-                                    <label class="input-label">Capacity</label>
-                                    <input type="number" class="input" id="capacity" value="100" required>
+                        <form id="locationForm">
+                            <div class="modal-body">
+                                <div class="space-y-4">
+                                    <div class="input-group">
+                                        <label class="input-label">Warehouse ID</label>
+                                        <input type="text" class="input" id="warehouseId" value="WH01" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="input-label">Aisle</label>
+                                        <input type="text" class="input" id="aisle" placeholder="e.g., A" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="input-label">Rack</label>
+                                        <input type="text" class="input" id="rack" placeholder="e.g., 1" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="input-label">Shelf</label>
+                                        <input type="text" class="input" id="shelf" placeholder="e.g., 1" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="input-label">Capacity</label>
+                                        <input type="number" class="input" id="capacity" value="100" required>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" id="cancel-btn">Cancel</button>
-                            <button class="btn btn-primary" id="submit-btn">Create</button>
-                        </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                                <button type="submit" class="btn btn-primary" id="submit-btn">Create</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
         </main>
@@ -647,7 +691,6 @@
         const tableBody = document.getElementById('tableBody');
         const emptyMessage = document.getElementById('emptyMessage');
         const modal = document.getElementById('modal');
-        const addLocationBtn = document.getElementById('addLocationBtn');
         const formInputs = {
             warehouseId: document.getElementById('warehouseId'),
             aisle: document.getElementById('aisle'),
@@ -736,16 +779,15 @@
                 modalTitle.textContent = 'Add New Location';
                 submitBtn.textContent = 'Create';
             }
-            modal.style.display = 'flex';
+            modal.classList.add('active');
         }
 
         function closeModal() {
-            modal.style.display = 'none';
+            modal.classList.remove('active');
             currentLocationId = null;
         }
 
         // Event listeners
-        addLocationBtn.addEventListener('click', () => openModal());
         cancelBtn.addEventListener('click', closeModal);
         modalCloseBtn.addEventListener('click', closeModal);
         modal.addEventListener('click', function (e) {
@@ -753,7 +795,7 @@
                 closeModal();
             }
         });
-        submitBtn.addEventListener('click', handleSubmit);
+        document.getElementById('locationForm').addEventListener('submit', handleSubmit);
 
         async function handleSubmit() {
             const warehouseId = formInputs.warehouseId.value.trim();

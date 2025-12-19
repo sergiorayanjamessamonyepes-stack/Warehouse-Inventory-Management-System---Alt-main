@@ -444,7 +444,7 @@
                 columns = ['SKU', 'Name', 'Total Stock', 'Reorder Point', 'Supplier ID', 'Status'];
             } else if (type === 'transactions') {
                 url = '/api/transactions';
-                columns = ['Transaction ID', 'Type', 'Date', 'User ID', 'Item SKU', 'Quantity', 'Notes', 'Supplier ID', 'Location ID'];
+                columns = ['Transaction ID', 'Type', 'Date', 'User ID', 'Item SKU', 'Quantity', 'Supplier ID'];
             } else if (type === 'low-stock') {
                 url = '/api/reports/low-stock';
                 columns = ['SKU', 'Name', 'Total Stock', 'Reorder Point', 'Supplier ID', 'Status'];

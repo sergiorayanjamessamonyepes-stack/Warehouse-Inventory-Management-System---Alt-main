@@ -621,9 +621,7 @@ def add_transaction():
         return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json()
     trans_type = data['type']
-    user_id = data['userId']  # Assuming from session or data
-
-    # Fetch the item to update stock
+    user_id = data['userId']
     item = ItemsList.query.get_or_404(data['itemSku'])
 
     new_trans = Transaction(
@@ -634,7 +632,6 @@ def add_transaction():
         itemSku=data['itemSku'],
         quantity=data['quantity']
     )
-
     if trans_type == 'receive':
         new_trans.supplierId = data.get('supplierId')
         # Add to stock for receive
@@ -642,7 +639,6 @@ def add_transaction():
     else:
         # Subtract from stock for issue, transfer, adjustment
         item.totalStock -= data['quantity']
-
     db.session.add(new_trans)
     db.session.commit()
     return jsonify({'message': 'Transaction added successfully', 'transId': new_trans.transId}), 201

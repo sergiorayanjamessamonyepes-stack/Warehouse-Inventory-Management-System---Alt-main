@@ -725,22 +725,6 @@ def items_staff():
         return redirect(url_for('login'))
     return render_template('ItemsPageStaff.html', first_name=session['first_name'], role=session['role'])
 
-@app.route('/locations-staff')
-def locations_staff():
-    if 'first_name' not in session:
-        return redirect(url_for('login'))
-    locations = Location.query.all()
-    location_list = [{
-        'locationId': location.locationId,
-        'warehouseId': location.warehouseId,
-        'aisle': location.aisle,
-        'rack': location.rack,
-        'shelf': location.shelf,
-        'fullPath': location.fullPath,
-        'capacity': location.capacity
-    } for location in locations]
-    return render_template('LocationsPageStaff.html', location_list=location_list, first_name=session['first_name'], role=session['role'])
-
 @app.route('/transactions-staff')
 def transactions_staff():
     if 'first_name' not in session:

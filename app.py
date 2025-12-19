@@ -370,6 +370,21 @@ def add_item():
     db.session.commit()
     return jsonify({'message': 'Item added successfully'}), 201
 
+@app.route('/api/items/<sku>', methods=['GET'])
+@login_required
+def get_item(sku):
+    item = ItemsList.query.get_or_404(sku)
+    return jsonify({
+        'sku': item.sku,
+        'name': item.name,
+        'description': item.description,
+        'unit': item.unit,
+        'totalStock': item.totalStock,
+        'reorderPoint': item.reorderPoint,
+        'supplierId': item.supplierId,
+        'status': 'In Stock' if item.totalStock > item.reorderPoint else 'Low Stock'
+    })
+
 @app.route('/api/items/<sku>', methods=['PUT'])
 @login_required
 def update_item(sku):
@@ -500,6 +515,18 @@ def get_users():
         'fullName': user.fullName,
         'role': user.role.upper()
     } for user in users])
+
+@app.route('/api/users/<userId>', methods=['GET'])
+def get_user(userId):
+    if 'first_name' not in session or session['role'] != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    user = User.query.get_or_404(userId)
+    return jsonify({
+        'userId': user.userId,
+        'username': user.username,
+        'fullName': user.fullName,
+        'role': user.role.upper()
+    })
 
 @app.route('/api/users', methods=['POST'])
 def add_user():

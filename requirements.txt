@@ -1,6 +1,7 @@
 flask
 gunicorn
 flask-sqlalchemy
+pymysql
 flask-login
 flask-migrate
 psycopg2-binary
